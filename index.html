@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual YouTube Player Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://js.stripe.com/v3/"></script> 
+    <script src="https://sdk.mercadopago.com/js/v2"></script> 
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none; 
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .video-container { width: 50%; aspect-ratio: 9/16; position: relative; background-color: #1f2937; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .maximized { width: 100% !important; z-index: 50; }
+        .hidden-video { display: none !important; }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"].styled-slider::-webkit-slider-runnable-track {
+            background: #4a5568; height: 0.5rem; border-radius: 0.25rem;
+        }
+        input[type="range"].styled-slider::-moz-range-track {
+            background: #4a5568; height: 0.5rem; border-radius: 0.25rem;
+        }
+        input[type="range"].styled-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; margin-top: -0.30rem; 
+            background-color: #3b82f6; height: 1.1rem; width: 1.1rem;  
+            border-radius: 50%; border: 1px solid white; 
+        }
+        input[type="range"].styled-slider::-moz-range-thumb {
+            background-color: #3b82f6; height: 1.1rem; width: 1.1rem;
+            border-radius: 50%; border: 1px solid white;
+        }
+        input[type="range"].volume-slider-vertical {
+            writing-mode: bt-lr; -webkit-appearance: slider-vertical; 
+            width: 0.75rem; padding: 0 5px;
+        }
+        input[type="range"].volume-slider-vertical::-webkit-slider-runnable-track {
+            background: #4a5568; width: 0.5rem; height: 100%; border-radius: 0.25rem;
+        }
+        input[type="range"].volume-slider-vertical::-moz-range-track {
+            background: #4a5568; width: 0.5rem; height: 100%; border-radius: 0.25rem;
+        }
+        input[type="range"].volume-slider-vertical::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; margin-left: -0.375rem; 
+            background-color: #f97316; height: 1.25rem; width: 1.25rem;
+            border-radius: 50%; border: 2px solid white; 
+        }
+        input[type="range"].volume-slider-vertical::-moz-range-thumb {
+            background-color: #f97316; height: 1.25rem; width: 1.25rem;
+            border-radius: 50%; border: 2px solid white;
+        }
+        #map-container { 
+            width: 200px; height: 150px; position: fixed; bottom: 160px; 
+            right: 20px;
+            z-index: 1000; border: 2px solid #3b82f6; border-radius: 8px;
+            overflow: hidden; cursor: grab; transition: width 0.3s ease, height 0.3s ease; 
+        }
+        #map-container.maximized { 
+            width: 90vw; height: 80vh; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); cursor: default;
+        }
+        #map-pip { width: 100%; height: 100%; }
+        .payment-button { transition: transform 0.1s ease-in-out; }
+        .payment-button:active { transform: scale(0.95); }
+        .control-button { 
+            background-color: #3b82f6; color: white; padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem; transition: background-color 0.2s; font-size: 1.25rem; 
+        }
+        .control-button:hover { background-color: #2563eb; }
+        .control-button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        #pix-payment-brick-container {
+            margin-top: 0.75rem; 
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-2 md:p-4 overflow-x-hidden no-scrollbar">
+
+    <div class="w-full max-w-4xl mx-auto">
+        <div class="my-2 w-full">
+            <label for="speed-slider" class="block text-sm font-medium text-center">Velocidade: <span id="speed-value">1.00</span>x</label>
+            <input type="range" id="speed-slider" min="0.07" max="3" step="0.01" value="1" class="styled-slider w-full" title="Ajustar velocidade" aria-label="Ajustar velocidade">
+        </div>
+        <div class="flex w-full relative">
+            <div class="flex items-center justify-center px-1 md:px-2">
+                <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical accent-orange-500 h-48 md:h-64 lg:h-80" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
+            </div>
+            <div id="player-wrapper" class="flex flex-grow">
+                <div id="video-container-1" class="video-container"><div id="player1"></div></div>
+                <div id="video-container-2" class="video-container"><div id="player2"></div></div>
+            </div>
+            <div class="flex items-center justify-center px-1 md:px-2">
+                 <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical accent-orange-500 h-48 md:h-64 lg:h-80" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
+            </div>
+        </div>
+        <div class="my-2 w-full">
+            <label for="sync-slider" class="block text-sm font-medium text-center">Sincronia Vídeo 2: <span id="sync-value">0.00</span>s</label>
+            <input type="range" id="sync-slider" min="-3" max="3" step="0.1" value="0" class="styled-slider w-full" title="Ajustar sincronia" aria-label="Ajustar sincronia">
+        </div>
+        <div class="my-3 flex flex-wrap justify-center items-center gap-1 md:gap-2">
+            <button id="prev-channel-pair" class="control-button" title="Par de Canais Anterior"><i class="fas fa-angle-double-left"></i></button>
+            <button id="prev-playlist-pair" class="control-button" title="Par de Playlists Anterior"><i class="fas fa-angle-left"></i></button>
+            <button id="prev-video-pair" class="control-button" title="Par de Vídeos Anterior"><i class="fas fa-backward"></i></button>
+            <button id="play-pause-button" class="control-button text-2xl min-w-[3.5rem] text-center" title="Play/Pause"><i class="fas fa-play"></i></button>
+            <button id="next-video-pair" class="control-button" title="Próximo Par de Vídeos"><i class="fas fa-forward"></i></button>
+            <button id="next-playlist-pair" class="control-button" title="Próximo Par de Playlists"><i class="fas fa-angle-right"></i></button>
+            <button id="next-channel-pair" class="control-button" title="Próximo Par de Canais"><i class="fas fa-angle-double-right"></i></button>
+        </div>
+         <div class="text-xs text-center my-1">User ID: <span id="user-id-display">A carregar...</span></div>
+         <div class="text-xs text-center my-1">App ID: <span id="app-id-display">A carregar...</span></div>
+    </div>
+
+    <div id="map-container"><div id="map-pip"></div></div>
+
+    <div class="mt-4 p-4 bg-gray-800 rounded-lg w-full max-w-md mx-auto fixed bottom-0 left-0 right-0 shadow-lg">
+        <h3 class="text-lg font-semibold text-center mb-3">Faça uma Contribuição</h3>
+        <div class="flex items-center mb-3">
+            <span class="text-gray-400 mr-2">R$</span>
+            <input type="number" id="contribution-amount" placeholder="Ex: 10.00" class="flex-grow p-2 rounded bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button id="google-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://developers.google.com/static/pay/images/GPay.svg" alt="Google Pay" class="h-6 mr-2"> Pagar</button>
+            <button id="apple-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://applepay.cdn-apple.com/static/img/logo/applepay_logo_rgb_dark.svg" alt="Apple Pay" class="h-8"> </button>
+            <button id="pix-button" class="payment-button bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://img.icons8.com/ios-filled/50/ffffff/pix.png" alt="PIX" class="h-6 mr-2">PIX</button>
+        </div>
+        <div id="pix-payment-brick-container" class="my-3"></div>
+        <p class="text-xs text-gray-500 mt-2 text-center">Pagamentos processados por Stripe e Mercado Pago (Modo Teste).</p>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO ---
+        const YOUTUBE_API_KEY = 'AIzaSyD_Zsq3U7B_ThlZpXYcntuv2Atqavde90A'; 
+        const SUPABASE_URL = 'https://uralqyrgxkohymxntxby.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyYWxxeXJneGtvaHlteG50eGJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ2MDg3MDAsImV4cCI6MjA2MDE4NDcwMH0.02dZve6eoHcELI6Fb4wmn8rjm09zpUUayxm2VSYoRdc';
+        const MERCADO_PAGO_PUBLIC_KEY = 'TEST-8605317f-051f-4886-867d-6fcc935ff498';
+        const STRIPE_PUBLIC_KEY = 'pk_test_51RHDsbR3BZuxLobHLeQeYTDF462ZqvsBRRlIJ0phA7FYmCQn784NMXfuNRxOOZWWLHzpI2HozsbEFalZXsDdQMG400l8FJXush';
+        // IMPORTANTE: Para teste local do Stripe, substitua 'price_1RSXVNR3BZuxLobHMcqGxB8b' 
+        // por um Price ID real de um produto com PREÇO FIXO no seu Stripe Dashboard.
+        const STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST = 'price_1RSXVNR3BZuxLobHMcqGxB8b'; 
+        const INITIAL_CHANNEL_IDS = ['UCLStyr92FK6hIV2LuTUxb8Q', 'UCTgA53H26v-UpV0kq5CZEtQ', 'UC_DxTOFRi6a7USg8RfZqc5Q', 'UCCC2DCVgsgobfyLjr37M70A'];
+
+        // --- ESTADO GLOBAL ---
+        let player1, player2;
+        let p1State = -1, p2State = -1; 
+        let currentSpeed = 1.0;
+        let syncOffset = 0; 
+        let currentChannelPairIndex = 0;
+        let currentPlaylistPairIndices = [0, 0]; 
+        let currentVideoPairIndices = [0, 0];    
+        let channelData = []; 
+        let map;
+        let mapMarkers = []; 
+        let currentSingleMarker = null; 
+        let isMapMaximized = false;
+        let mapDragOffset = { x: 0, y: 0 };
+        let isMapDragging = false;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-dual-player-app-id';
+        let userId = 'anonymous-' + Math.random().toString(36).substring(2, 11); 
+        let mpBrickController; 
+        let currentVideoErrorCount = 0; 
+        const MAX_VIDEO_RELOAD_ATTEMPTS = 1; 
+
+        // --- ELEMENTOS DOM ---
+        const speedSlider = document.getElementById('speed-slider');
+        const speedValueDisplay = document.getElementById('speed-value');
+        const syncSlider = document.getElementById('sync-slider');  
+        const syncValueDisplay = document.getElementById('sync-value');
+        const volumeSlider1 = document.getElementById('volume-slider-1'); 
+        const volumeSlider2 = document.getElementById('volume-slider-2'); 
+        const playPauseButton = document.getElementById('play-pause-button');
+        const playPauseIcon = playPauseButton.querySelector('i');
+        const videoContainer1 = document.getElementById('video-container-1'); 
+        const videoContainer2 = document.getElementById('video-container-2'); 
+        const mapContainer = document.getElementById('map-container');
+        const mapElement = document.getElementById('map-pip');
+        const contributionAmountInput = document.getElementById('contribution-amount');
+        const googlePayButton = document.getElementById('google-pay-button');
+        const applePayButton = document.getElementById('apple-pay-button');
+        const pixButton = document.getElementById('pix-button');
+        const pixPaymentBrickContainer = document.getElementById('pix-payment-brick-container');
+
+        // --- API DO YOUTUBE PLAYER ---
+        function onYouTubeIframeAPIReady() {
+            console.log("DEBUG: onYouTubeIframeAPIReady chamada. window.location.origin:", window.location.origin);
+            if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+                console.error("ERRO CRÍTICO: API do YouTube (YT ou YT.Player) não está definida."); return;
+            }
+            setTimeout(() => {
+                console.log("DEBUG: Delay em onYouTubeIframeAPIReady concluído. Chamando loadInitialVideoPair.");
+                loadInitialVideoPair();
+            }, 200); 
+        }
+        async function loadInitialVideoPair() {
+            console.log("DEBUG: loadInitialVideoPair iniciado.");
+            displayMessage("A carregar dados dos canais...", true);
+            await loadAllChannelData(); 
+            displayMessage("Dados dos canais processados.", false, 1500);
+
+            let videoId1, videoId2;
+            let playlistForMap;
+            currentVideoErrorCount = 0; 
+            
+            if (channelData.length > 0 && channelData[0]?.playlists?.length > 0 && channelData[0].playlists[0]?.videos?.length > 0) {
+                videoId1 = channelData[0].playlists[0].videos[0].id;
+                playlistForMap = channelData[0].playlists[0]; 
+
+                if (channelData.length >= 2 && channelData[1]?.playlists?.length > 0 && channelData[1].playlists[0]?.videos?.length > 0) {
+                    videoId2 = channelData[1].playlists[0].videos[0].id;
+                } else { 
+                    if (channelData[0].playlists[0].videos.length > 1) {
+                        videoId2 = channelData[0].playlists[0].videos[1 % channelData[0].playlists[0].videos.length].id; 
+                    } else { 
+                        videoId2 = videoId1; 
+                    }
+                }
+                console.log("DEBUG: Usando vídeos dos canais para iniciar:", videoId1, videoId2);
+            } else { 
+                console.warn("DEBUG: Não foi possível carregar vídeos dos canais. Usando vídeos e playlist de fallback.");
+                videoId1 = 'dQw4w9WgXcQ'; videoId2 = 'rokGy0huYEA'; 
+                playlistForMap = { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" };
+            }
+            createPlayers(videoId1, videoId2);
+            updateMapFromPlaylist(playlistForMap); 
+        }
+        
+        function handlePlayerError(playerErrored, event) {
+            const playerNumber = playerErrored === player1 ? '1' : '2';
+            console.error(`DEBUG: Erro no Player ${playerNumber}. Código: ${event.data}`);
+            displayMessage(`Erro ao carregar vídeo ${playerNumber}.`, false, 3000);
+
+            if (player1 && typeof player1.stopVideo === 'function') player1.stopVideo();
+            if (player2 && typeof player2.stopVideo === 'function') player2.stopVideo();
+            p1State = YT.PlayerState.ENDED; 
+            p2State = YT.PlayerState.ENDED;
+            updatePlayPauseIconStyle();
+
+            if (currentVideoErrorCount < MAX_VIDEO_RELOAD_ATTEMPTS) {
+                currentVideoErrorCount++;
+                console.log(`DEBUG: Tentativa de recarregar o par de vídeos (${currentVideoErrorCount}/${MAX_VIDEO_RELOAD_ATTEMPTS}).`);
+                displayMessage("Tentando recarregar vídeos...", false, 2000);
+                setTimeout(() => loadVideoPairByCurrentIndices(true), 1000); 
+            } else {
+                console.log("DEBUG: Máximo de tentativas de recarregamento atingido. Avançando para o próximo par.");
+                displayMessage("Falha ao carregar. Avançando para o próximo par...", false, 2000);
+                setTimeout(() => navigateVideoPair(1), 1000); 
+            }
+        }
+
+        function createPlayers(videoId1, videoId2) {
+            console.log(`DEBUG: createPlayers - IDs: ${videoId1}, ${videoId2}`);
+            const player1Div = document.getElementById('player1');
+            const player2Div = document.getElementById('player2');
+            if (!player1Div || !player2Div) { console.error("ERRO CRÍTICO: Elemento(s) do player não encontrado(s) no DOM."); return; }
+            if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') { console.error("ERRO em createPlayers: YT.Player não definido."); return; }
+            try {
+                if (player1 && typeof player1.destroy === 'function') player1.destroy();
+                player1 = new YT.Player('player1', { videoId: videoId1, playerVars: { 'autoplay': 0, 'controls': 0, 'loop': 0, 'mute': 0, 'origin': window.location.origin }, events: { 'onReady': onPlayer1Ready, 'onStateChange': onPlayer1StateChange, 'onError': (e) => handlePlayerError(player1, e) }});
+                if (player2 && typeof player2.destroy === 'function') player2.destroy();
+                player2 = new YT.Player('player2', { videoId: videoId2, playerVars: { 'autoplay': 0, 'controls': 0, 'loop': 0, 'mute': 0, 'origin': window.location.origin }, events: { 'onReady': onPlayer2Ready, 'onStateChange': onPlayer2StateChange, 'onError': (e) => handlePlayerError(player2, e) }});
+            } catch (error) { console.error("ERRO CRÍTICO ao instanciar YT.Player:", error); }
+        }
+        function onPlayer1Ready(event) { console.log("DEBUG: Player 1 Pronto."); player1 = event.target; p1State = YT.PlayerState.CUED; if (player1.setVolume) player1.setVolume(parseInt(volumeSlider1.value)); if (player1.setPlaybackRate) player1.setPlaybackRate(currentSpeed); currentVideoErrorCount = 0; }
+        function onPlayer2Ready(event) { console.log("DEBUG: Player 2 Pronto."); player2 = event.target; p2State = YT.PlayerState.CUED; if (player2.setVolume) player2.setVolume(parseInt(volumeSlider2.value)); if (player2.setPlaybackRate) player2.setPlaybackRate(currentSpeed); currentVideoErrorCount = 0; }
+        function updatePlayPauseIconStyle() { if (p1State === YT.PlayerState.PLAYING || p2State === YT.PlayerState.PLAYING) { playPauseIcon.classList.remove('fa-play'); playPauseIcon.classList.add('fa-pause'); } else { playPauseIcon.classList.remove('fa-pause'); playPauseIcon.classList.add('fa-play'); }}
+        function onPlayer1StateChange(event) { p1State = event.data; console.log("DEBUG: P1 State:", playerStateToString(p1State)); handlePlayerStateChange(); updatePlayPauseIconStyle(); }
+        function onPlayer2StateChange(event) { p2State = event.data; console.log("DEBUG: P2 State:", playerStateToString(p2State)); handlePlayerStateChange(); updatePlayPauseIconStyle(); }
+        function playerStateToString(state) { switch(state) { case -1: return "UNSTARTED"; case 0: return "ENDED"; case 1: return "PLAYING"; case 2: return "PAUSED"; case 3: return "BUFFERING"; case 5: return "CUED"; default: return "UNKNOWN (" + state + ")"; }}
+        function handlePlayerStateChange() { if (p1State === YT.PlayerState.ENDED && p2State === YT.PlayerState.ENDED) { console.log("DEBUG Loop: Ambos terminaram."); playVideosSynchronized(true); }}
+        function playVideosSynchronized(isLoopRestart = false) { if (!player1 || !player2 || typeof player1.seekTo !== 'function' || typeof player2.seekTo !== 'function' || typeof player1.playVideo !== 'function' || typeof player2.playVideo !== 'function') { console.error("DEBUG playVideosSynchronized: Players não prontos."); return; } console.log("DEBUG playVideosSynchronized. LoopRestart:", isLoopRestart); if (typeof player1.pauseVideo === 'function') player1.pauseVideo(); if (typeof player2.pauseVideo === 'function') player2.pauseVideo(); let timeP1ToSeek = 0, timeP2ToSeek = 0; if (!isLoopRestart) { timeP1ToSeek = player1.getCurrentTime ? player1.getCurrentTime() : 0; timeP2ToSeek = player1.getCurrentTime ? player1.getCurrentTime() : 0; } if (syncOffset > 0) { timeP2ToSeek += syncOffset; } else if (syncOffset < 0) { timeP1ToSeek += Math.abs(syncOffset); } if (timeP1ToSeek < 0) timeP1ToSeek = 0; if (timeP2ToSeek < 0) timeP2ToSeek = 0; console.log(`DEBUG playVideosSynchronized: P1 seekTo ${timeP1ToSeek.toFixed(2)}, P2 seekTo ${timeP2ToSeek.toFixed(2)}`); player1.seekTo(timeP1ToSeek, true); player2.seekTo(timeP2ToSeek, true); setTimeout(() => { console.log("DEBUG playVideosSynchronized: Chamando playVideo."); if (typeof player1.playVideo === 'function') player1.playVideo(); if (typeof player2.playVideo === 'function') player2.playVideo(); }, 400); }
+        
+        async function fetchPlaylistsForChannel(channelId) {
+            console.log(`DEBUG fetchPlaylists: Buscando playlists para o canal ${channelId}`);
+            const playlistsUrl = `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&channelId=${channelId}&maxResults=50&key=${YOUTUBE_API_KEY}`;
+            try {
+                const response = await fetch(playlistsUrl);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: { message: "Erro desconhecido"}}));
+                    console.error(`DEBUG fetchPlaylists: Erro ${response.status} para ${channelId}:`, errorData.error?.message);
+                    return [];
+                }
+                const data = await response.json();
+                console.log(`DEBUG fetchPlaylists: ${data.items?.length || 0} playlists para ${channelId}.`);
+                return data.items?.map(item => ({ id: item.id, title: item.snippet?.title, description: item.snippet?.description, videos: [] })) || [];
+            } catch (error) {
+                console.error(`DEBUG fetchPlaylists: Exceção para ${channelId}:`, error); return [];
+            }
+        }
+        async function fetchVideosForPlaylist(playlistId) {
+            console.log(`DEBUG fetchVideos: Buscando vídeos para a playlist ${playlistId}`);
+            const videosUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=50&key=${YOUTUBE_API_KEY}`;
+            try {
+                const response = await fetch(videosUrl);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: { message: "Erro desconhecido"}}));
+                    console.error(`DEBUG fetchVideos: Erro ${response.status} para ${playlistId}:`, errorData.error?.message);
+                    return [];
+                }
+                const data = await response.json();
+                console.log(`DEBUG fetchVideos: ${data.items?.length || 0} vídeos para ${playlistId}.`);
+                return data.items?.filter(item => item.contentDetails?.videoId).map(item => ({ id: item.contentDetails.videoId, title: item.snippet?.title, description: item.snippet?.description })) || [];
+            } catch (error) {
+                console.error(`DEBUG fetchVideos: Exceção para ${playlistId}:`, error); return [];
+            }
+        }
+        async function loadAllChannelData() {
+            console.log("DEBUG loadAllChannelData: Iniciando.");
+            channelData = []; 
+            for (const channelId of INITIAL_CHANNEL_IDS) {
+                const playlists = await fetchPlaylistsForChannel(channelId);
+                if (playlists && playlists.length > 0) {
+                    for (let i = 0; i < playlists.length; i++) {
+                        playlists[i].videos = await fetchVideosForPlaylist(playlists[i].id);
+                    }
+                    channelData.push({ id: channelId, playlists: playlists });
+                }
+            }
+            console.log("DEBUG loadAllChannelData: Finalizado. Canais carregados:", channelData.length);
+        }
+        
+        // --- Controlos ---
+        speedSlider.addEventListener('input', (e) => { currentSpeed = parseFloat(e.target.value); speedValueDisplay.textContent = currentSpeed.toFixed(2); if (player1?.setPlaybackRate) player1.setPlaybackRate(currentSpeed); if (player2?.setPlaybackRate) player2.setPlaybackRate(currentSpeed);});
+        syncSlider.addEventListener('input', (e) => { syncOffset = parseFloat(e.target.value); syncValueDisplay.textContent = syncOffset.toFixed(2); applySyncOnSliderMove(); });
+        function applySyncOnSliderMove() { if (!player1 || !player2 || typeof player1.getCurrentTime !== 'function' || typeof player2.seekTo !== 'function' || typeof player2.getCurrentTime !== 'function' || typeof player2.seekTo !== 'function') { return; } const wasPlaying = p1State === YT.PlayerState.PLAYING || p2State === YT.PlayerState.PLAYING; if (wasPlaying) { if (player1?.pauseVideo) player1.pauseVideo(); if (player2?.pauseVideo) player2.pauseVideo(); } let p1TimeToSeek = player1.getCurrentTime(); let p2TimeToSeek = player1.getCurrentTime(); if (syncOffset > 0) { p2TimeToSeek += syncOffset; } else if (syncOffset < 0) { p1TimeToSeek += Math.abs(syncOffset); } if (p1TimeToSeek < 0) p1TimeToSeek = 0; if (p2TimeToSeek < 0) p2TimeToSeek = 0; player1.seekTo(p1TimeToSeek, true); player2.seekTo(p2TimeToSeek, true); if (wasPlaying) { setTimeout(() => { if (player1?.playVideo) player1.playVideo(); if (player2?.playVideo) player2.playVideo(); }, 350); }}
+        volumeSlider1.addEventListener('input', (e) => { if (player1?.setVolume) player1.setVolume(parseInt(e.target.value)); });
+        volumeSlider2.addEventListener('input', (e) => { if (player2?.setVolume) player2.setVolume(parseInt(e.target.value)); });
+        
+        playPauseButton.addEventListener('click', () => {
+            console.log("DEBUG: Botão Play/Pause clicado. P1State:", playerStateToString(p1State), "P2State:", playerStateToString(p2State));
+            if (!player1 || !player2) { console.error("DEBUG Play/Pause: Players não instanciados."); return; }
+            const isAnyPlaying = p1State === YT.PlayerState.PLAYING || p2State === YT.PlayerState.PLAYING;
+            const isP1Ready = p1State === YT.PlayerState.UNSTARTED || p1State === YT.PlayerState.CUED || p1State === YT.PlayerState.PAUSED;
+            const isP2Ready = p2State === YT.PlayerState.UNSTARTED || p2State === YT.PlayerState.CUED || p2State === YT.PlayerState.PAUSED;
+
+            if (isAnyPlaying) { 
+                if (typeof player1.pauseVideo === 'function') player1.pauseVideo();
+                if (typeof player2.pauseVideo === 'function') player2.pauseVideo();
+            } else if (isP1Ready && isP2Ready) {
+                console.log("DEBUG Play/Pause: Players prontos ou pausados. Tentando play.");
+                 if (p1State === YT.PlayerState.PAUSED || p2State === YT.PlayerState.PAUSED) {
+                    playVideosSynchronized(false); 
+                 } else { 
+                    if (typeof player1.playVideo === 'function') player1.playVideo();
+                    setTimeout(() => { if (typeof player2.playVideo === 'function') player2.playVideo(); }, 100);
+                 }
+            } else {
+                 console.warn("DEBUG Play/Pause: Estados não ideais para play. Tentando sincronizar.");
+                 playVideosSynchronized(false); 
+            }
+        });
+        
+        // --- Funções de Navegação ---
+        document.getElementById('next-video-pair').addEventListener('click', () => navigateVideoPair(1));
+        document.getElementById('prev-video-pair').addEventListener('click', () => navigateVideoPair(-1));
+        document.getElementById('next-playlist-pair').addEventListener('click', () => navigatePlaylistPair(1));
+        document.getElementById('prev-playlist-pair').addEventListener('click', () => navigatePlaylistPair(-1));
+        document.getElementById('next-channel-pair').addEventListener('click', () => navigateChannelPair(1));
+        document.getElementById('prev-channel-pair').addEventListener('click', () => navigateChannelPair(-1));
+        function navigateVideoPair(direction) { if (channelData.length === 0) { displayMessage("A carregar dados...", true); return; } currentVideoErrorCount = 0; const ch1DataIdx = channelData.findIndex(ch => ch.id === INITIAL_CHANNEL_IDS[currentChannelPairIndex]); let ch2DataIdx = -1; if (INITIAL_CHANNEL_IDS.length > 1) { const nextChannelIdInInitialList = INITIAL_CHANNEL_IDS[(currentChannelPairIndex + 1) % INITIAL_CHANNEL_IDS.length]; ch2DataIdx = channelData.findIndex(ch => ch.id === nextChannelIdInInitialList); } if (ch1DataIdx === -1) { console.error("Canal 1 não encontrado em channelData"); return; } const channel1 = channelData[ch1DataIdx]; const channel2 = (ch2DataIdx !== -1) ? channelData[ch2DataIdx] : channel1; const playlist1 = channel1.playlists[currentPlaylistPairIndices[0] % (channel1.playlists.length || 1)]; const playlist2 = channel2.playlists[currentPlaylistPairIndices[1] % (channel2.playlists.length || 1)]; if (playlist1 && playlist1.videos.length > 0) { currentVideoPairIndices[0] = (currentVideoPairIndices[0] + direction + playlist1.videos.length) % playlist1.videos.length; } if (playlist2 && playlist2.videos.length > 0) { currentVideoPairIndices[1] = (currentVideoPairIndices[1] + direction + playlist2.videos.length) % playlist2.videos.length; } else if (playlist1 && playlist1.videos.length > 0) { currentVideoPairIndices[1] = currentVideoPairIndices[0];} loadVideoPairByCurrentIndices(); }
+        function navigatePlaylistPair(direction) { if (channelData.length === 0) { displayMessage("A carregar dados...", true); return; } currentVideoErrorCount = 0; const ch1DataIdx = channelData.findIndex(ch => ch.id === INITIAL_CHANNEL_IDS[currentChannelPairIndex]); let ch2DataIdx = -1; if (INITIAL_CHANNEL_IDS.length > 1) { const nextChannelIdInInitialList = INITIAL_CHANNEL_IDS[(currentChannelPairIndex + 1) % INITIAL_CHANNEL_IDS.length]; ch2DataIdx = channelData.findIndex(ch => ch.id === nextChannelIdInInitialList); } if (ch1DataIdx === -1) { console.error("Canal 1 não encontrado em channelData"); return; } const channel1 = channelData[ch1DataIdx]; const channel2 = (ch2DataIdx !== -1) ? channelData[ch2DataIdx] : channel1; if (channel1.playlists.length > 0) { currentPlaylistPairIndices[0] = (currentPlaylistPairIndices[0] + direction + channel1.playlists.length) % channel1.playlists.length; currentVideoPairIndices[0] = 0;  } if (channel2.playlists.length > 0) { currentPlaylistPairIndices[1] = (currentPlaylistPairIndices[1] + direction + channel2.playlists.length) % channel2.playlists.length; currentVideoPairIndices[1] = 0; } else if (channel1.playlists.length > 0) { currentPlaylistPairIndices[1] = currentPlaylistPairIndices[0]; currentVideoPairIndices[1] = 0;} loadVideoPairByCurrentIndices(); }
+        function navigateChannelPair(direction) { if (INITIAL_CHANNEL_IDS.length === 0) { displayMessage("Nenhum canal configurado."); return; } if (INITIAL_CHANNEL_IDS.length < 2 && direction !== 0) { displayMessage("Apenas um par de canais configurado."); return;} currentVideoErrorCount = 0; currentChannelPairIndex = (currentChannelPairIndex + direction * 2 + INITIAL_CHANNEL_IDS.length) % INITIAL_CHANNEL_IDS.length; currentPlaylistPairIndices = [0, 0];  currentVideoPairIndices = [0, 0]; loadVideoPairByCurrentIndices(); }
+        function loadVideoPairByCurrentIndices(isReloadAttempt = false) { if (!isReloadAttempt) currentVideoErrorCount = 0; let playlistForMapUpdate; if (channelData.length === 0) { console.warn("loadVideoPairByCurrentIndices: channelData vazio. Usando fallback."); createPlayers('dQw4w9WgXcQ', 'rokGy0huYEA'); playlistForMapUpdate = { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" }; updateMapFromPlaylist(playlistForMapUpdate); return;  } const ch1IdFromInitial = INITIAL_CHANNEL_IDS[currentChannelPairIndex % INITIAL_CHANNEL_IDS.length]; const ch1DataIdx = channelData.findIndex(ch => ch.id === ch1IdFromInitial); let ch2IdFromInitial = null; let ch2DataIdx = -1; if (INITIAL_CHANNEL_IDS.length > 1) { ch2IdFromInitial = INITIAL_CHANNEL_IDS[(currentChannelPairIndex + 1) % INITIAL_CHANNEL_IDS.length]; ch2DataIdx = channelData.findIndex(ch => ch.id === ch2IdFromInitial); } else { ch2IdFromInitial = ch1IdFromInitial; ch2DataIdx = ch1DataIdx; } if (ch1DataIdx === -1) { console.error("loadVideoPairByCurrentIndices: Canal principal (ID:", ch1IdFromInitial,") não encontrado. Usando fallback."); createPlayers('dQw4w9WgXcQ', 'rokGy0huYEA'); updateMapFromPlaylist({ title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" }); return; } const channel1 = channelData[ch1DataIdx]; const channel2 = (ch2DataIdx !== -1 && channelData[ch2DataIdx]) ? channelData[ch2DataIdx] : channel1; const pl1Idx = currentPlaylistPairIndices[0] % (channel1.playlists.length || 1); const pl2Idx = currentPlaylistPairIndices[1] % (channel2.playlists.length || 1); const playlist1Data = channel1.playlists[pl1Idx]; const playlist2Data = channel2.playlists[pl2Idx]; const vid1Id = playlist1Data?.videos[currentVideoPairIndices[0] % (playlist1Data.videos?.length || 1)]?.id; const vid2Id = playlist2Data?.videos[currentVideoPairIndices[1] % (playlist2Data.videos?.length || 1)]?.id || vid1Id; if (vid1Id && vid2Id) { console.log(`loadVideoPairByCurrentIndices: Carregando P1=${vid1Id}, P2=${vid2Id}`); createPlayers(vid1Id, vid2Id); updateMapFromPlaylist(playlist1Data || { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" }); } else { console.error("loadVideoPairByCurrentIndices: IDs de vídeo não encontrados. Usando fallback."); createPlayers('dQw4w9WgXcQ', 'rokGy0huYEA'); updateMapFromPlaylist({ title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" }); }}
+        
+        // --- Funções do Mapa ---
+        [videoContainer1, videoContainer2].forEach(container => { let lastTapTime = 0; container.addEventListener('touchend', function(event) { const currentTime = new Date().getTime(); if (currentTime - lastTapTime < 300) { event.preventDefault(); toggleMaximize(container); } lastTapTime = currentTime; }); container.addEventListener('dblclick', () => toggleMaximize(container)); });
+        function toggleMaximize(selectedContainer) { const otherContainer = (selectedContainer === videoContainer1) ? videoContainer2 : videoContainer1; selectedContainer.classList.toggle('maximized'); otherContainer.classList.toggle('hidden-video', selectedContainer.classList.contains('maximized')); }
+        function initMap() { map = L.map(mapElement, { center: [-23.4334, -45.0719], zoom: 13, scrollWheelZoom: false }); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM contributors' }).addTo(map); makeMapDraggable(); mapElement.addEventListener('dblclick', toggleMapMaximize); }
+        function makeMapDraggable() { mapContainer.onmousedown = function(event) { if (isMapMaximized || !map) return; if (event.target.closest('.leaflet-control-container') || event.target.closest('.leaflet-map-pane')) { if(map && map.dragging && !map.dragging.enabled()) map.dragging.enable(); return; } if (map.dragging && map.dragging.enabled()) map.dragging.disable(); isMapDragging = true; mapContainer.style.cursor = 'grabbing'; mapDragOffset.x = event.clientX - mapContainer.offsetLeft; mapDragOffset.y = event.clientY - mapContainer.offsetTop; }; document.onmousemove = function(event) { if (!isMapDragging || isMapMaximized) return; let newX = event.clientX - mapDragOffset.x; let newY = event.clientY - mapDragOffset.y; const margin = 10; newX = Math.max(margin, Math.min(newX, window.innerWidth - mapContainer.offsetWidth - margin)); newY = Math.max(margin, Math.min(newY, window.innerHeight - mapContainer.offsetHeight - margin)); mapContainer.style.left = newX + 'px'; mapContainer.style.top = newY + 'px'; }; document.onmouseup = function() { if (isMapDragging && map && map.dragging && !isMapMaximized && !map.dragging.enabled()) { map.dragging.enable(); } isMapDragging = false; if (!isMapMaximized) mapContainer.style.cursor = 'grab'; }; }
+        function parseCoordinatesFromDescription(description) { if (!description) return null; const patterns = [ /lat:\s*(-?\d+\.?\d*)[,\s]+lon:\s*(-?\d+\.?\d*)/i, /coord(?:enadas)?:\s*(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/i, /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/ ]; for (const pattern of patterns) { const match = description.match(pattern); if (match) return { lat: parseFloat(match[1]), lon: parseFloat(match[2]) }; } console.warn("DEBUG: Coordenadas não encontradas:", description); return null;  }
+        
+        function updateMapFromPlaylist(playlist) { 
+            if (!map) { console.warn("DEBUG: Mapa não inicializado para updateMapFromPlaylist."); return; }
+            
+            // Limpa todos os marcadores existentes (single e multiple)
+            if (currentSingleMarker) { currentSingleMarker.remove(); currentSingleMarker = null; }
+            mapMarkers.forEach(marker => marker.remove()); mapMarkers = [];
+
+            if (!playlist || !playlist.description) {
+                 console.log("DEBUG updateMapFromPlaylist: Playlist inválida ou sem descrição. Usando fallback de visualização.");
+                 map.setView([-23.4334, -45.0719], 13); // Zoom um pouco menor para fallback
+                 return;
+            }
+            const coords = parseCoordinatesFromDescription(playlist.description);
+            if (coords) {
+                currentSingleMarker = L.marker([coords.lat, coords.lon]).addTo(map)
+                    .bindPopup(`<b>${playlist.title || 'Localização Atual'}</b>`).openPopup();
+                
+                // Garante que o mapa tenha as dimensões corretas e centraliza
+                map.invalidateSize(); 
+                map.setView([coords.lat, coords.lon], 15); // Zoom 15 para PiP, centralizado no marcador
+                
+                console.log("DEBUG updateMapFromPlaylist: Marcador para:", playlist.title, "em", coords, "Mapa centrado.");
+            } else {
+                 console.log("DEBUG updateMapFromPlaylist: Coordenadas não encontradas. Usando fallback de visualização.");
+                 map.invalidateSize();
+                 map.setView([-23.4334, -45.0719], 10); 
+            }
+        }
+
+        function updateMapPlaylistMarkers() { 
+            if (!map) { console.warn("DEBUG: Mapa não inicializado para marcadores múltiplos."); return; }
+            
+            // Limpa todos os marcadores antes de adicionar novos
+            if (currentSingleMarker) { currentSingleMarker.remove(); currentSingleMarker = null; }
+            mapMarkers.forEach(marker => marker.remove()); mapMarkers = [];
+
+            let allValidCoords = [];
+
+            if (channelData.length === 0) { 
+                console.log("DEBUG updateMapPlaylistMarkers: Sem dados de canal. Exibindo fallback.");
+                const fallbackPlaylist = { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" };
+                updateMapFromPlaylist(fallbackPlaylist); // Usa a função de marcador único para o fallback
+                return; 
+            }
+
+            channelData.forEach((ch) => { 
+                ch.playlists.forEach((pl) => { 
+                    if (pl.description) { 
+                        const coords = parseCoordinatesFromDescription(pl.description); 
+                        if (coords) { 
+                            const marker = L.marker([coords.lat, coords.lon]).addTo(map).bindPopup(`<b>${pl.title}</b><br><small>${ch.id}</small>`); 
+                            marker.on('click', () => { 
+                                if (isMapMaximized) { 
+                                    let actualChannelIndex = channelData.findIndex(c => c.id === ch.id);
+                                    let actualPlaylistIndex = channelData[actualChannelIndex]?.playlists.findIndex(p => p.id === pl.id);
+                                    if (actualChannelIndex !== -1 && actualPlaylistIndex !== -1) {
+                                        currentChannelPairIndex = actualChannelIndex; 
+                                        currentPlaylistPairIndices[0] = actualPlaylistIndex;
+                                        currentPlaylistPairIndices[1] = 0; 
+                                        currentVideoPairIndices = [0,0];
+                                        loadVideoPairByCurrentIndices(); 
+                                        toggleMapMaximize(); 
+                                    }
+                                } 
+                            }); 
+                            mapMarkers.push(marker); 
+                            allValidCoords.push(marker.getLatLng());
+                        } 
+                    } 
+                }); 
+            }); 
+            
+            if (allValidCoords.length > 0) {
+                 const bounds = L.latLngBounds(allValidCoords);
+                 if (bounds.isValid()) map.fitBounds(bounds.pad(0.1));  
+            } else {
+                console.log("DEBUG updateMapPlaylistMarkers: Nenhum marcador com coordenadas válidas. Usando fallback de visualização.");
+                map.setView([-23.4334, -45.0719], 10);
+            }
+            console.log("DEBUG: updateMapPlaylistMarkers concluído. Total de marcadores:", mapMarkers.length);
+        }
+        
+        function toggleMapMaximize() { 
+            isMapMaximized = !isMapMaximized; 
+            mapContainer.classList.toggle('maximized', isMapMaximized); 
+            
+            requestAnimationFrame(() => { 
+                setTimeout(() => { 
+                    if (map) {
+                        map.invalidateSize(); 
+                        console.log("DEBUG toggleMapMaximize: map.invalidateSize() chamado.");
+                        if (isMapMaximized) {
+                            if (map.dragging && !map.dragging.enabled()) map.dragging.enable(); 
+                            if (map.scrollWheelZoom && !map.scrollWheelZoom.enabled()) map.scrollWheelZoom.enable();
+                            mapContainer.style.cursor = 'default'; 
+                            updateMapPlaylistMarkers(); 
+                        } else { 
+                            if (map.dragging && map.dragging.enabled()) map.dragging.disable(); 
+                            if (map.scrollWheelZoom && map.scrollWheelZoom.enabled()) map.scrollWheelZoom.disable();
+                            mapContainer.style.cursor = 'grab'; 
+                            let playlistToFocus;
+                            if (channelData.length > 0 && channelData[currentChannelPairIndex % channelData.length]?.playlists[currentPlaylistPairIndices[0]]) {
+                                playlistToFocus = channelData[currentChannelPairIndex % channelData.length].playlists[currentPlaylistPairIndices[0]];
+                            } else {
+                                playlistToFocus = { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" };
+                            }
+                            updateMapFromPlaylist(playlistToFocus); 
+                        }
+                    }
+                }, 200); 
+            });
+        }
+        
+        // --- Pagamentos ---
+        let stripe; 
+        if (STRIPE_PUBLIC_KEY) {
+            try { stripe = Stripe(STRIPE_PUBLIC_KEY); } catch (e) { console.error("Erro Stripe init:", e); }
+        } else { console.warn("Stripe PK em falta."); }
+
+        googlePayButton.addEventListener('click', async () => { 
+            if (!stripe) { displayMessage("Stripe não configurado."); return; } 
+            const amount = parseFloat(contributionAmountInput.value); 
+            if (isNaN(amount) || amount <= 0) { displayMessage("Valor inválido."); return; }
+            
+            displayMessage("A processar pagamento com Stripe...");
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log(`DEBUG Stripe (Local): Usando Price ID fixo (${STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST}) para teste. Valor (não usado com este Price ID): ${amount}`);
+                if (STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST === 'price_YOUR_FIXED_PRICE_ID_HERE' || !STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST) {
+                    displayMessage("Stripe: Configure STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST com um Price ID de preço FIXO para testes locais.");
+                    console.error("Stripe: STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST não configurado."); return;
+                }
+                 try {
+                    const { error } = await stripe.redirectToCheckout({ 
+                        lineItems: [{ price: STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST, quantity: 1 }], 
+                        mode: 'payment', 
+                        successUrl: `${window.location.origin}?stripe_payment=success_local`, 
+                        cancelUrl: `${window.location.origin}?stripe_payment=cancelled_local`, 
+                    }); 
+                    if (error) { console.error('Erro Stripe (Local):', error); displayMessage(`Erro Stripe: ${error.message}`); } 
+                } catch (e) { console.error('Erro Stripe (Local):', e); displayMessage(`Erro Stripe: ${e.message}`); }
+            } else {
+                console.log(`DEBUG Stripe (Deploy): Tentando chamar /api/create-stripe-session. Valor: ${amount}`);
+                try {
+                    const response = await fetch('/api/create-stripe-session', { 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', },
+                        body: JSON.stringify({ amount: amount, currency: 'BRL' }),
+                    });
+                    const sessionData = await response.json();
+                    if (!response.ok || sessionData.error) {
+                        throw new Error(sessionData.error || `Erro do servidor: ${response.statusText} (${response.status})`);
+                    }
+                    const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.sessionId });
+                    if (error) { console.error('Erro Stripe redirectToCheckout (Deploy):', error); displayMessage(`Erro Stripe: ${error.message}`); } 
+                } catch (e) { console.error('Erro ao chamar API Stripe ou redirecionar (Deploy):', e); displayMessage(`Erro Stripe: ${e.message}`); }
+            }
+        });
+        
+        applePayButton.addEventListener('click', () => { googlePayButton.click(); displayMessage("Apple Pay (Stripe) - Usando fluxo do Google Pay para demonstração."); });
+        
+        let mp; 
+        if (MERCADO_PAGO_PUBLIC_KEY) {
+            try { mp = new MercadoPago(MERCADO_PAGO_PUBLIC_KEY, { locale: 'pt-BR'});} 
+            catch (e) { console.error("Erro Mercado Pago init:", e); }
+        } else { console.warn("MP PK em falta."); }
+
+        async function renderPixPaymentBrick(transactionAmount) {
+            if (!mp) { displayMessage("Mercado Pago não configurado."); return; }
+            if (mpBrickController) { 
+                try { mpBrickController.unmount(); } catch(e) { console.warn("Erro ao desmontar brick MP:", e)}
+            }
+            pixPaymentBrickContainer.innerHTML = ''; 
+            const bricksBuilder = mp.bricks();
+            try {
+                console.log("DEBUG MP: Renderizando Payment Brick, valor:", transactionAmount);
+                const paymentBrickSettings = {
+                    initialization: {
+                        amount: transactionAmount,
+                        payer: { email: "test_user_" + Date.now() + "@testuser.com" },
+                    },
+                    customization: {
+                        paymentMethods: {
+                             // Tentativa de configuração mais aberta para incluir PIX
+                             mercadoPago: 'all', 
+                        },
+                         visual: { style: { theme: 'dark' } }
+                    },
+                    callbacks: {
+                        onReady: () => { console.log("DEBUG MP: Payment Brick pronto!"); },
+                        onSubmit: async ({ formData }) => {
+                            console.log("DEBUG MP: onSubmit Brick.", formData);
+                            displayMessage("Processando pagamento (simulação)...");
+                            return new Promise((resolve) => {
+                                setTimeout(() => {
+                                    alert(`Simulação: Pagamento de R$${transactionAmount} processado.`);
+                                    displayMessage("Pagamento processado (simulação)!");
+                                    resolve();
+                                }, 2000);
+                            });
+                        },
+                        onError: (error) => {
+                            console.error("DEBUG MP: Erro no Brick:", error);
+                            displayMessage("Erro no formulário de pagamento: " + (error.message || JSON.stringify(error)));
+                        },
+                    },
+                };
+                mpBrickController = await bricksBuilder.create("payment", "pix-payment-brick-container", paymentBrickSettings);
+            } catch (error) {
+                console.error("DEBUG MP: Erro ao criar Payment Brick:", error);
+                displayMessage("Erro ao inicializar formulário de pagamento Mercado Pago.");
+            }
+        }
+
+        pixButton.addEventListener('click', async () => {
+            if (!mp) { displayMessage("Mercado Pago não configurado."); return; }
+            const amount = parseFloat(contributionAmountInput.value);
+            if (isNaN(amount) || amount <= 0.01) { 
+                displayMessage("Valor inválido (Ex: >= R$0.01)."); return;
+            }
+            renderPixPaymentBrick(amount);
+        });
+
+        function displayMessage(message, isPermanent = false, duration = 3000) { const msgArea = document.getElementById('user-id-display'); if (msgArea) { msgArea.textContent = message; msgArea.style.color = message.toLowerCase().includes("erro") ? "red" : "lightgreen"; if (!isPermanent) { setTimeout(() => { if (msgArea.textContent === message) updateUserIdDisplay(); }, duration); } } }
+        function updateIdDisplays() { updateUserIdDisplay(); if(document.getElementById('app-id-display')) document.getElementById('app-id-display').textContent = appId; }
+        function updateUserIdDisplay() { if(document.getElementById('user-id-display')) { document.getElementById('user-id-display').textContent = userId; document.getElementById('user-id-display').style.color = 'white';} }
+        
+
+        window.onload = () => {
+            console.log("DEBUG: window.onload disparado.");
+            const tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api"; 
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            if (firstScriptTag && firstScriptTag.parentNode) {
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            } else {
+                document.head.appendChild(tag);
+            }
+            initMap(); 
+            updateIdDisplays(); 
+        };
+    </script>
+</body>
+</html>
