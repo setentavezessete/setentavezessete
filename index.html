@@ -7,21 +7,32 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://js.stripe.com/v3/"></script> 
-    <script src="https://sdk.mercadopago.com/js/v2"></script> 
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            overscroll-behavior: none; 
+            overscroll-behavior: none;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .video-container { width: 50%; aspect-ratio: 9/16; position: relative; background-color: #1f2937; }
+        .video-container { width: 50%; aspect-ratio: 16/9; /* Default aspect ratio */ position: relative; background-color: #1f2937; }
+        /* Mobile-first: stack videos vertically */
+        @media (max-width: 767px) {
+            .video-container { width: 100%; aspect-ratio: 16/9; }
+            #player-wrapper { flex-direction: column; }
+        }
+        /* Desktop: side-by-side */
+        @media (min-width: 768px) {
+            .video-container { width: 50%; aspect-ratio: 16/9; } /* Adjusted for typical landscape video */
+             #player-wrapper { flex-direction: row; }
+        }
+
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .maximized { width: 100% !important; z-index: 50; }
+        .maximized { width: 100% !important; height: auto !important; aspect-ratio: 16/9; z-index: 50; }
         .hidden-video { display: none !important; }
 
         input[type="range"] {
@@ -37,16 +48,17 @@
             background: #4a5568; height: 0.5rem; border-radius: 0.25rem;
         }
         input[type="range"].styled-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none; margin-top: -0.30rem; 
-            background-color: #3b82f6; height: 1.1rem; width: 1.1rem;  
-            border-radius: 50%; border: 1px solid white; 
+            -webkit-appearance: none; appearance: none; margin-top: -0.30rem;
+            background-color: #3b82f6; height: 1.1rem; width: 1.1rem;
+            border-radius: 50%; border: 1px solid white;
         }
         input[type="range"].styled-slider::-moz-range-thumb {
             background-color: #3b82f6; height: 1.1rem; width: 1.1rem;
             border-radius: 50%; border: 1px solid white;
         }
         input[type="range"].volume-slider-vertical {
-            writing-mode: bt-lr; -webkit-appearance: slider-vertical; 
+            writing-mode: bt-lr; /* IE */
+            -webkit-appearance: slider-vertical; /* WebKit */
             width: 0.75rem; padding: 0 5px;
         }
         input[type="range"].volume-slider-vertical::-webkit-slider-runnable-track {
@@ -56,55 +68,74 @@
             background: #4a5568; width: 0.5rem; height: 100%; border-radius: 0.25rem;
         }
         input[type="range"].volume-slider-vertical::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none; margin-left: -0.375rem; 
+            -webkit-appearance: none; appearance: none; margin-left: -0.375rem; /* Adjust to center thumb */
             background-color: #f97316; height: 1.25rem; width: 1.25rem;
-            border-radius: 50%; border: 2px solid white; 
+            border-radius: 50%; border: 2px solid white;
         }
         input[type="range"].volume-slider-vertical::-moz-range-thumb {
             background-color: #f97316; height: 1.25rem; width: 1.25rem;
             border-radius: 50%; border: 2px solid white;
         }
-        #map-container { 
-            width: 200px; height: 150px; position: fixed; bottom: 160px; 
+        #map-container {
+            width: 200px; height: 150px; position: fixed; bottom: 220px; /* Adjusted to avoid overlap with payment */
             right: 20px;
             z-index: 1000; border: 2px solid #3b82f6; border-radius: 8px;
-            overflow: hidden; cursor: grab; transition: width 0.3s ease, height 0.3s ease; 
+            overflow: hidden; cursor: grab; transition: width 0.3s ease, height 0.3s ease, bottom 0.3s ease, right 0.3s ease, top 0.3s ease, left 0.3s ease;
         }
-        #map-container.maximized { 
+        #map-container.maximized {
             width: 90vw; height: 80vh; top: 50%; left: 50%;
             transform: translate(-50%, -50%); cursor: default;
+            bottom: auto; right: auto; /* Reset fixed positioning for maximized state */
         }
         #map-pip { width: 100%; height: 100%; }
         .payment-button { transition: transform 0.1s ease-in-out; }
         .payment-button:active { transform: scale(0.95); }
-        .control-button { 
+        .control-button {
             background-color: #3b82f6; color: white; padding: 0.5rem 0.75rem;
-            border-radius: 0.375rem; transition: background-color 0.2s; font-size: 1.25rem; 
+            border-radius: 0.375rem; transition: background-color 0.2s; font-size: 1.25rem;
         }
         .control-button:hover { background-color: #2563eb; }
         .control-button:disabled { background-color: #9ca3af; cursor: not-allowed; }
         #pix-payment-brick-container {
-            margin-top: 0.75rem; 
+            margin-top: 0.75rem;
         }
+        /* Payment section styling */
+        #payment-section {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #1f2937; /* bg-gray-800 */
+            padding: 1rem; /* p-4 */
+            border-top-left-radius: 0.5rem; /* rounded-t-lg */
+            border-top-right-radius: 0.5rem;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+            z-index: 1001; /* Above map PiP */
+            max-width: 600px; /* Limit width on larger screens */
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Ensure body has enough padding at the bottom to not hide content behind fixed payment section */
+        body { padding-bottom: 250px; /* Adjust as needed based on payment section height */ }
     </style>
 </head>
-<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-2 md:p-4 overflow-x-hidden no-scrollbar">
+<body class="bg-gray-900 text-white flex flex-col items-center justify-start min-h-screen p-2 md:p-4 overflow-x-hidden no-scrollbar">
 
-    <div class="w-full max-w-4xl mx-auto">
+    <div class="w-full max-w-5xl mx-auto mt-4">
         <div class="my-2 w-full">
             <label for="speed-slider" class="block text-sm font-medium text-center">Velocidade: <span id="speed-value">1.00</span>x</label>
             <input type="range" id="speed-slider" min="0.07" max="3" step="0.01" value="1" class="styled-slider w-full" title="Ajustar velocidade" aria-label="Ajustar velocidade">
         </div>
-        <div class="flex w-full relative">
+        <div class="flex w-full relative items-stretch">
             <div class="flex items-center justify-center px-1 md:px-2">
-                <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical accent-orange-500 h-48 md:h-64 lg:h-80" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
+                <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical accent-orange-500 h-32 sm:h-48 md:h-64 lg:h-80" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
             </div>
             <div id="player-wrapper" class="flex flex-grow">
                 <div id="video-container-1" class="video-container"><div id="player1"></div></div>
                 <div id="video-container-2" class="video-container"><div id="player2"></div></div>
             </div>
             <div class="flex items-center justify-center px-1 md:px-2">
-                 <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical accent-orange-500 h-48 md:h-64 lg:h-80" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
+                 <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical accent-orange-500 h-32 sm:h-48 md:h-64 lg:h-80" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
             </div>
         </div>
         <div class="my-2 w-full">
@@ -126,16 +157,16 @@
 
     <div id="map-container"><div id="map-pip"></div></div>
 
-    <div class="mt-4 p-4 bg-gray-800 rounded-lg w-full max-w-md mx-auto fixed bottom-0 left-0 right-0 shadow-lg">
+    <div id="payment-section">
         <h3 class="text-lg font-semibold text-center mb-3">Faça uma Contribuição</h3>
         <div class="flex items-center mb-3">
             <span class="text-gray-400 mr-2">R$</span>
-            <input type="number" id="contribution-amount" placeholder="Ex: 10.00" class="flex-grow p-2 rounded bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="number" id="contribution-amount" placeholder="Ex: 10.00" class="flex-grow p-2 rounded bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none" step="0.01" min="0.50">
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <button id="google-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://developers.google.com/static/pay/images/GPay.svg" alt="Google Pay" class="h-6 mr-2"> Pagar</button>
-            <button id="apple-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://applepay.cdn-apple.com/static/img/logo/applepay_logo_rgb_dark.svg" alt="Apple Pay" class="h-8"> </button>
-            <button id="pix-button" class="payment-button bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://img.icons8.com/ios-filled/50/ffffff/pix.png" alt="PIX" class="h-6 mr-2">PIX</button>
+            <button id="google-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://developers.google.com/static/pay/images/GPay.svg" alt="Google Pay" class="h-6 mr-2" onerror="this.style.display='none'"> Pagar</button>
+            <button id="apple-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://applepay.cdn-apple.com/static/img/logo/applepay_logo_rgb_dark.svg" alt="Apple Pay" class="h-8" onerror="this.style.display='none'"> </button>
+            <button id="pix-button" class="payment-button bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://img.icons8.com/ios-filled/50/ffffff/pix.png" alt="PIX" class="h-6 mr-2" onerror="this.src='https://placehold.co/24x24/000000/FFFFFF?text=PIX'; this.classList.remove('h-6'); this.classList.add('h-5', 'w-5');">PIX</button>
         </div>
         <div id="pix-payment-brick-container" class="my-3"></div>
         <p class="text-xs text-gray-500 mt-2 text-center">Pagamentos processados por Stripe e Mercado Pago (Modo Teste).</p>
@@ -143,48 +174,46 @@
 
     <script>
         // --- CONFIGURAÇÃO ---
-        const YOUTUBE_API_KEY = 'AIzaSyD_Zsq3U7B_ThlZpXYcntuv2Atqavde90A'; 
+        const YOUTUBE_API_KEY = 'AIzaSyD_Zsq3U7B_ThlZpXYcntuv2Atqavde90A'; // Substitua pela sua chave da API do YouTube
         const SUPABASE_URL = 'https://uralqyrgxkohymxntxby.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyYWxxeXJneGtvaHlteG50eGJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ2MDg3MDAsImV4cCI6MjA2MDE4NDcwMH0.02dZve6eoHcELI6Fb4wmn8rjm09zpUUayxm2VSYoRdc';
-        const MERCADO_PAGO_PUBLIC_KEY = 'TEST-8605317f-051f-4886-867d-6fcc935ff498';
-        const STRIPE_PUBLIC_KEY = 'pk_test_51RHDsbR3BZuxLobHLeQeYTDF462ZqvsBRRlIJ0phA7FYmCQn784NMXfuNRxOOZWWLHzpI2HozsbEFalZXsDdQMG400l8FJXush';
-        // IMPORTANTE: Para teste local do Stripe, substitua 'price_1RSXVNR3BZuxLobHMcqGxB8b' 
-        // por um Price ID real de um produto com PREÇO FIXO no seu Stripe Dashboard.
-        const STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST = 'price_1RSXVNR3BZuxLobHMcqGxB8b'; 
+        const MERCADO_PAGO_PUBLIC_KEY = 'TEST-8605317f-051f-4886-867d-6fcc935ff498'; // Chave de teste do Mercado Pago
+        const STRIPE_PUBLIC_KEY = 'pk_test_51RHDsbR3BZuxLobHLeQeYTDF462ZqvsBRRlIJ0phA7FYmCQn784NMXfuNRxOOZWWLHzpI2HozsbEFalZXsDdQMG400l8FJXush'; // Chave de teste do Stripe
+        const STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST = 'price_1RSXVNR3BZuxLobHMcqGxB8b'; // IMPORTANTE: Substitua por um Price ID REAL de um produto com PREÇO FIXO no seu Stripe Dashboard para testes locais.
         const INITIAL_CHANNEL_IDS = ['UCLStyr92FK6hIV2LuTUxb8Q', 'UCTgA53H26v-UpV0kq5CZEtQ', 'UC_DxTOFRi6a7USg8RfZqc5Q', 'UCCC2DCVgsgobfyLjr37M70A'];
 
         // --- ESTADO GLOBAL ---
         let player1, player2;
-        let p1State = -1, p2State = -1; 
+        let p1State = -1, p2State = -1;
         let currentSpeed = 1.0;
-        let syncOffset = 0; 
+        let syncOffset = 0;
         let currentChannelPairIndex = 0;
-        let currentPlaylistPairIndices = [0, 0]; 
-        let currentVideoPairIndices = [0, 0];    
-        let channelData = []; 
+        let currentPlaylistPairIndices = [0, 0];
+        let currentVideoPairIndices = [0, 0];
+        let channelData = [];
         let map;
-        let mapMarkers = []; 
-        let currentSingleMarker = null; 
+        let mapMarkers = [];
+        let currentSingleMarker = null;
         let isMapMaximized = false;
         let mapDragOffset = { x: 0, y: 0 };
         let isMapDragging = false;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-dual-player-app-id';
-        let userId = 'anonymous-' + Math.random().toString(36).substring(2, 11); 
-        let mpBrickController; 
-        let currentVideoErrorCount = 0; 
-        const MAX_VIDEO_RELOAD_ATTEMPTS = 1; 
+        let userId = 'anonymous-' + Math.random().toString(36).substring(2, 11);
+        let mpBrickController;
+        let currentVideoErrorCount = 0;
+        const MAX_VIDEO_RELOAD_ATTEMPTS = 1;
 
         // --- ELEMENTOS DOM ---
         const speedSlider = document.getElementById('speed-slider');
         const speedValueDisplay = document.getElementById('speed-value');
-        const syncSlider = document.getElementById('sync-slider');  
+        const syncSlider = document.getElementById('sync-slider');
         const syncValueDisplay = document.getElementById('sync-value');
-        const volumeSlider1 = document.getElementById('volume-slider-1'); 
-        const volumeSlider2 = document.getElementById('volume-slider-2'); 
+        const volumeSlider1 = document.getElementById('volume-slider-1');
+        const volumeSlider2 = document.getElementById('volume-slider-2');
         const playPauseButton = document.getElementById('play-pause-button');
         const playPauseIcon = playPauseButton.querySelector('i');
-        const videoContainer1 = document.getElementById('video-container-1'); 
-        const videoContainer2 = document.getElementById('video-container-2'); 
+        const videoContainer1 = document.getElementById('video-container-1');
+        const videoContainer2 = document.getElementById('video-container-2');
         const mapContainer = document.getElementById('map-container');
         const mapElement = document.getElementById('map-pip');
         const contributionAmountInput = document.getElementById('contribution-amount');
@@ -199,42 +228,47 @@
             if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
                 console.error("ERRO CRÍTICO: API do YouTube (YT ou YT.Player) não está definida."); return;
             }
+            // Pequeno delay para garantir que tudo esteja pronto, especialmente em conexões mais lentas ou com muitos scripts
             setTimeout(() => {
                 console.log("DEBUG: Delay em onYouTubeIframeAPIReady concluído. Chamando loadInitialVideoPair.");
                 loadInitialVideoPair();
-            }, 200); 
+            }, 200); // Aumentado para 200ms por segurança
         }
+
         async function loadInitialVideoPair() {
             console.log("DEBUG: loadInitialVideoPair iniciado.");
             displayMessage("A carregar dados dos canais...", true);
-            await loadAllChannelData(); 
+            await loadAllChannelData(); // Carrega todos os dados de canais, playlists e vídeos
             displayMessage("Dados dos canais processados.", false, 1500);
 
             let videoId1, videoId2;
             let playlistForMap;
-            currentVideoErrorCount = 0; 
+            currentVideoErrorCount = 0; // Reseta contador de erros ao carregar novo par
             
+            // Lógica para selecionar os vídeos iniciais
             if (channelData.length > 0 && channelData[0]?.playlists?.length > 0 && channelData[0].playlists[0]?.videos?.length > 0) {
                 videoId1 = channelData[0].playlists[0].videos[0].id;
-                playlistForMap = channelData[0].playlists[0]; 
+                playlistForMap = channelData[0].playlists[0]; // Usar a primeira playlist do primeiro canal para o mapa
 
+                // Tenta pegar o vídeo do segundo canal, se existir
                 if (channelData.length >= 2 && channelData[1]?.playlists?.length > 0 && channelData[1].playlists[0]?.videos?.length > 0) {
                     videoId2 = channelData[1].playlists[0].videos[0].id;
-                } else { 
+                } else { // Senão, pega o segundo vídeo da primeira playlist do primeiro canal (ou o mesmo se só tiver um)
                     if (channelData[0].playlists[0].videos.length > 1) {
-                        videoId2 = channelData[0].playlists[0].videos[1 % channelData[0].playlists[0].videos.length].id; 
-                    } else { 
-                        videoId2 = videoId1; 
+                        videoId2 = channelData[0].playlists[0].videos[1 % channelData[0].playlists[0].videos.length].id; // Garante que não quebre se só tiver 1 vídeo
+                    } else { // Se só houver um vídeo na primeira playlist
+                        videoId2 = videoId1; // Repete o vídeo
                     }
                 }
                 console.log("DEBUG: Usando vídeos dos canais para iniciar:", videoId1, videoId2);
-            } else { 
+            } else { // Fallback se nenhum dado de canal/vídeo for carregado
                 console.warn("DEBUG: Não foi possível carregar vídeos dos canais. Usando vídeos e playlist de fallback.");
-                videoId1 = 'dQw4w9WgXcQ'; videoId2 = 'rokGy0huYEA'; 
+                videoId1 = 'dQw4w9WgXcQ'; // Exemplo: Rick Astley
+                videoId2 = 'rokGy0huYEA'; // Exemplo: Nyan Cat
                 playlistForMap = { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" };
             }
             createPlayers(videoId1, videoId2);
-            updateMapFromPlaylist(playlistForMap); 
+            updateMapFromPlaylist(playlistForMap); // Atualiza o mapa com a playlist do primeiro vídeo
         }
         
         function handlePlayerError(playerErrored, event) {
@@ -242,21 +276,23 @@
             console.error(`DEBUG: Erro no Player ${playerNumber}. Código: ${event.data}`);
             displayMessage(`Erro ao carregar vídeo ${playerNumber}.`, false, 3000);
 
+            // Para ambos os players para evitar comportamento inesperado
             if (player1 && typeof player1.stopVideo === 'function') player1.stopVideo();
             if (player2 && typeof player2.stopVideo === 'function') player2.stopVideo();
-            p1State = YT.PlayerState.ENDED; 
+            p1State = YT.PlayerState.ENDED; // Considera como terminado para UI
             p2State = YT.PlayerState.ENDED;
             updatePlayPauseIconStyle();
 
+            // Tenta recarregar o par de vídeos ou avançar
             if (currentVideoErrorCount < MAX_VIDEO_RELOAD_ATTEMPTS) {
                 currentVideoErrorCount++;
                 console.log(`DEBUG: Tentativa de recarregar o par de vídeos (${currentVideoErrorCount}/${MAX_VIDEO_RELOAD_ATTEMPTS}).`);
                 displayMessage("Tentando recarregar vídeos...", false, 2000);
-                setTimeout(() => loadVideoPairByCurrentIndices(true), 1000); 
+                setTimeout(() => loadVideoPairByCurrentIndices(true), 1000); // true indica que é uma tentativa de recarga
             } else {
                 console.log("DEBUG: Máximo de tentativas de recarregamento atingido. Avançando para o próximo par.");
                 displayMessage("Falha ao carregar. Avançando para o próximo par...", false, 2000);
-                setTimeout(() => navigateVideoPair(1), 1000); 
+                setTimeout(() => navigateVideoPair(1), 1000); // Avança para o próximo par
             }
         }
 
@@ -273,8 +309,8 @@
                 player2 = new YT.Player('player2', { videoId: videoId2, playerVars: { 'autoplay': 0, 'controls': 0, 'loop': 0, 'mute': 0, 'origin': window.location.origin }, events: { 'onReady': onPlayer2Ready, 'onStateChange': onPlayer2StateChange, 'onError': (e) => handlePlayerError(player2, e) }});
             } catch (error) { console.error("ERRO CRÍTICO ao instanciar YT.Player:", error); }
         }
-        function onPlayer1Ready(event) { console.log("DEBUG: Player 1 Pronto."); player1 = event.target; p1State = YT.PlayerState.CUED; if (player1.setVolume) player1.setVolume(parseInt(volumeSlider1.value)); if (player1.setPlaybackRate) player1.setPlaybackRate(currentSpeed); currentVideoErrorCount = 0; }
-        function onPlayer2Ready(event) { console.log("DEBUG: Player 2 Pronto."); player2 = event.target; p2State = YT.PlayerState.CUED; if (player2.setVolume) player2.setVolume(parseInt(volumeSlider2.value)); if (player2.setPlaybackRate) player2.setPlaybackRate(currentSpeed); currentVideoErrorCount = 0; }
+        function onPlayer1Ready(event) { console.log("DEBUG: Player 1 Pronto."); player1 = event.target; p1State = YT.PlayerState.CUED; if (player1.setVolume) player1.setVolume(parseInt(volumeSlider1.value)); if (player1.setPlaybackRate) player1.setPlaybackRate(currentSpeed); currentVideoErrorCount = 0; /* Reseta ao carregar com sucesso */ }
+        function onPlayer2Ready(event) { console.log("DEBUG: Player 2 Pronto."); player2 = event.target; p2State = YT.PlayerState.CUED; if (player2.setVolume) player2.setVolume(parseInt(volumeSlider2.value)); if (player2.setPlaybackRate) player2.setPlaybackRate(currentSpeed); currentVideoErrorCount = 0; /* Reseta ao carregar com sucesso */ }
         function updatePlayPauseIconStyle() { if (p1State === YT.PlayerState.PLAYING || p2State === YT.PlayerState.PLAYING) { playPauseIcon.classList.remove('fa-play'); playPauseIcon.classList.add('fa-pause'); } else { playPauseIcon.classList.remove('fa-pause'); playPauseIcon.classList.add('fa-play'); }}
         function onPlayer1StateChange(event) { p1State = event.data; console.log("DEBUG: P1 State:", playerStateToString(p1State)); handlePlayerStateChange(); updatePlayPauseIconStyle(); }
         function onPlayer2StateChange(event) { p2State = event.data; console.log("DEBUG: P2 State:", playerStateToString(p2State)); handlePlayerStateChange(); updatePlayPauseIconStyle(); }
@@ -288,7 +324,7 @@
             try {
                 const response = await fetch(playlistsUrl);
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: { message: "Erro desconhecido"}}));
+                    const errorData = await response.json().catch(() => ({ error: { message: "Erro desconhecido ao buscar playlists"}}));
                     console.error(`DEBUG fetchPlaylists: Erro ${response.status} para ${channelId}:`, errorData.error?.message);
                     return [];
                 }
@@ -305,7 +341,7 @@
             try {
                 const response = await fetch(videosUrl);
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: { message: "Erro desconhecido"}}));
+                    const errorData = await response.json().catch(() => ({ error: { message: "Erro desconhecido ao buscar vídeos"}}));
                     console.error(`DEBUG fetchVideos: Erro ${response.status} para ${playlistId}:`, errorData.error?.message);
                     return [];
                 }
@@ -318,7 +354,7 @@
         }
         async function loadAllChannelData() {
             console.log("DEBUG loadAllChannelData: Iniciando.");
-            channelData = []; 
+            channelData = []; // Limpa dados antigos
             for (const channelId of INITIAL_CHANNEL_IDS) {
                 const playlists = await fetchPlaylistsForChannel(channelId);
                 if (playlists && playlists.length > 0) {
@@ -342,23 +378,22 @@
             console.log("DEBUG: Botão Play/Pause clicado. P1State:", playerStateToString(p1State), "P2State:", playerStateToString(p2State));
             if (!player1 || !player2) { console.error("DEBUG Play/Pause: Players não instanciados."); return; }
             const isAnyPlaying = p1State === YT.PlayerState.PLAYING || p2State === YT.PlayerState.PLAYING;
-            const isP1Ready = p1State === YT.PlayerState.UNSTARTED || p1State === YT.PlayerState.CUED || p1State === YT.PlayerState.PAUSED;
-            const isP2Ready = p2State === YT.PlayerState.UNSTARTED || p2State === YT.PlayerState.CUED || p2State === YT.PlayerState.PAUSED;
+            const isP1Ready = p1State === YT.PlayerState.UNSTARTED || p1State === YT.PlayerState.CUED || p1State === YT.PlayerState.PAUSED || p1State === YT.PlayerState.ENDED; // Inclui ENDED para restart
+            const isP2Ready = p2State === YT.PlayerState.UNSTARTED || p2State === YT.PlayerState.CUED || p2State === YT.PlayerState.PAUSED || p2State === YT.PlayerState.ENDED; // Inclui ENDED para restart
 
-            if (isAnyPlaying) { 
+            if (isAnyPlaying) { // Se algum estiver tocando, pausa ambos
                 if (typeof player1.pauseVideo === 'function') player1.pauseVideo();
                 if (typeof player2.pauseVideo === 'function') player2.pauseVideo();
-            } else if (isP1Ready && isP2Ready) {
-                console.log("DEBUG Play/Pause: Players prontos ou pausados. Tentando play.");
-                 if (p1State === YT.PlayerState.PAUSED || p2State === YT.PlayerState.PAUSED) {
-                    playVideosSynchronized(false); 
-                 } else { 
-                    if (typeof player1.playVideo === 'function') player1.playVideo();
-                    setTimeout(() => { if (typeof player2.playVideo === 'function') player2.playVideo(); }, 100);
-                 }
+            } else if (isP1Ready && isP2Ready) { // Se ambos estiverem prontos para tocar (ou pausados/terminados)
+                console.log("DEBUG Play/Pause: Players prontos ou pausados/terminados. Tentando play.");
+                 if (p1State === YT.PlayerState.ENDED && p2State === YT.PlayerState.ENDED) {
+                    playVideosSynchronized(true); // Reinicia do começo
+                } else {
+                    playVideosSynchronized(false); // Continua de onde parou ou inicia se não tiver tocado
+                }
             } else {
-                 console.warn("DEBUG Play/Pause: Estados não ideais para play. Tentando sincronizar.");
-                 playVideosSynchronized(false); 
+                 console.warn("DEBUG Play/Pause: Estados não ideais para play. Tentando sincronizar e tocar.");
+                 playVideosSynchronized(false); // Tenta forçar um play sincronizado
             }
         });
         
@@ -369,9 +404,9 @@
         document.getElementById('prev-playlist-pair').addEventListener('click', () => navigatePlaylistPair(-1));
         document.getElementById('next-channel-pair').addEventListener('click', () => navigateChannelPair(1));
         document.getElementById('prev-channel-pair').addEventListener('click', () => navigateChannelPair(-1));
-        function navigateVideoPair(direction) { if (channelData.length === 0) { displayMessage("A carregar dados...", true); return; } currentVideoErrorCount = 0; const ch1DataIdx = channelData.findIndex(ch => ch.id === INITIAL_CHANNEL_IDS[currentChannelPairIndex]); let ch2DataIdx = -1; if (INITIAL_CHANNEL_IDS.length > 1) { const nextChannelIdInInitialList = INITIAL_CHANNEL_IDS[(currentChannelPairIndex + 1) % INITIAL_CHANNEL_IDS.length]; ch2DataIdx = channelData.findIndex(ch => ch.id === nextChannelIdInInitialList); } if (ch1DataIdx === -1) { console.error("Canal 1 não encontrado em channelData"); return; } const channel1 = channelData[ch1DataIdx]; const channel2 = (ch2DataIdx !== -1) ? channelData[ch2DataIdx] : channel1; const playlist1 = channel1.playlists[currentPlaylistPairIndices[0] % (channel1.playlists.length || 1)]; const playlist2 = channel2.playlists[currentPlaylistPairIndices[1] % (channel2.playlists.length || 1)]; if (playlist1 && playlist1.videos.length > 0) { currentVideoPairIndices[0] = (currentVideoPairIndices[0] + direction + playlist1.videos.length) % playlist1.videos.length; } if (playlist2 && playlist2.videos.length > 0) { currentVideoPairIndices[1] = (currentVideoPairIndices[1] + direction + playlist2.videos.length) % playlist2.videos.length; } else if (playlist1 && playlist1.videos.length > 0) { currentVideoPairIndices[1] = currentVideoPairIndices[0];} loadVideoPairByCurrentIndices(); }
-        function navigatePlaylistPair(direction) { if (channelData.length === 0) { displayMessage("A carregar dados...", true); return; } currentVideoErrorCount = 0; const ch1DataIdx = channelData.findIndex(ch => ch.id === INITIAL_CHANNEL_IDS[currentChannelPairIndex]); let ch2DataIdx = -1; if (INITIAL_CHANNEL_IDS.length > 1) { const nextChannelIdInInitialList = INITIAL_CHANNEL_IDS[(currentChannelPairIndex + 1) % INITIAL_CHANNEL_IDS.length]; ch2DataIdx = channelData.findIndex(ch => ch.id === nextChannelIdInInitialList); } if (ch1DataIdx === -1) { console.error("Canal 1 não encontrado em channelData"); return; } const channel1 = channelData[ch1DataIdx]; const channel2 = (ch2DataIdx !== -1) ? channelData[ch2DataIdx] : channel1; if (channel1.playlists.length > 0) { currentPlaylistPairIndices[0] = (currentPlaylistPairIndices[0] + direction + channel1.playlists.length) % channel1.playlists.length; currentVideoPairIndices[0] = 0;  } if (channel2.playlists.length > 0) { currentPlaylistPairIndices[1] = (currentPlaylistPairIndices[1] + direction + channel2.playlists.length) % channel2.playlists.length; currentVideoPairIndices[1] = 0; } else if (channel1.playlists.length > 0) { currentPlaylistPairIndices[1] = currentPlaylistPairIndices[0]; currentVideoPairIndices[1] = 0;} loadVideoPairByCurrentIndices(); }
-        function navigateChannelPair(direction) { if (INITIAL_CHANNEL_IDS.length === 0) { displayMessage("Nenhum canal configurado."); return; } if (INITIAL_CHANNEL_IDS.length < 2 && direction !== 0) { displayMessage("Apenas um par de canais configurado."); return;} currentVideoErrorCount = 0; currentChannelPairIndex = (currentChannelPairIndex + direction * 2 + INITIAL_CHANNEL_IDS.length) % INITIAL_CHANNEL_IDS.length; currentPlaylistPairIndices = [0, 0];  currentVideoPairIndices = [0, 0]; loadVideoPairByCurrentIndices(); }
+        function navigateVideoPair(direction) { if (channelData.length === 0) { displayMessage("A carregar dados...", true); return; } currentVideoErrorCount = 0; const ch1DataIdx = channelData.findIndex(ch => ch.id === INITIAL_CHANNEL_IDS[currentChannelPairIndex % INITIAL_CHANNEL_IDS.length]); let ch2DataIdx = -1; if (INITIAL_CHANNEL_IDS.length > 1) { const nextChannelIdInInitialList = INITIAL_CHANNEL_IDS[(currentChannelPairIndex + 1) % INITIAL_CHANNEL_IDS.length]; ch2DataIdx = channelData.findIndex(ch => ch.id === nextChannelIdInInitialList); } if (ch1DataIdx === -1) { console.error("Canal 1 não encontrado em channelData"); return; } const channel1 = channelData[ch1DataIdx]; const channel2 = (ch2DataIdx !== -1 && channelData[ch2DataIdx]) ? channelData[ch2DataIdx] : channel1; const playlist1 = channel1.playlists[currentPlaylistPairIndices[0] % (channel1.playlists.length || 1)]; const playlist2 = channel2.playlists[currentPlaylistPairIndices[1] % (channel2.playlists.length || 1)]; if (playlist1 && playlist1.videos.length > 0) { currentVideoPairIndices[0] = (currentVideoPairIndices[0] + direction + playlist1.videos.length) % playlist1.videos.length; } if (playlist2 && playlist2.videos.length > 0) { currentVideoPairIndices[1] = (currentVideoPairIndices[1] + direction + playlist2.videos.length) % playlist2.videos.length; } else if (playlist1 && playlist1.videos.length > 0) { currentVideoPairIndices[1] = currentVideoPairIndices[0];} loadVideoPairByCurrentIndices(); }
+        function navigatePlaylistPair(direction) { if (channelData.length === 0) { displayMessage("A carregar dados...", true); return; } currentVideoErrorCount = 0; const ch1DataIdx = channelData.findIndex(ch => ch.id === INITIAL_CHANNEL_IDS[currentChannelPairIndex % INITIAL_CHANNEL_IDS.length]); let ch2DataIdx = -1; if (INITIAL_CHANNEL_IDS.length > 1) { const nextChannelIdInInitialList = INITIAL_CHANNEL_IDS[(currentChannelPairIndex + 1) % INITIAL_CHANNEL_IDS.length]; ch2DataIdx = channelData.findIndex(ch => ch.id === nextChannelIdInInitialList); } if (ch1DataIdx === -1) { console.error("Canal 1 não encontrado em channelData"); return; } const channel1 = channelData[ch1DataIdx]; const channel2 = (ch2DataIdx !== -1 && channelData[ch2DataIdx]) ? channelData[ch2DataIdx] : channel1; if (channel1.playlists.length > 0) { currentPlaylistPairIndices[0] = (currentPlaylistPairIndices[0] + direction + channel1.playlists.length) % channel1.playlists.length; currentVideoPairIndices[0] = 0;  } if (channel2.playlists.length > 0) { currentPlaylistPairIndices[1] = (currentPlaylistPairIndices[1] + direction + channel2.playlists.length) % channel2.playlists.length; currentVideoPairIndices[1] = 0; } else if (channel1.playlists.length > 0) { currentPlaylistPairIndices[1] = currentPlaylistPairIndices[0]; currentVideoPairIndices[1] = 0;} loadVideoPairByCurrentIndices(); }
+        function navigateChannelPair(direction) { if (INITIAL_CHANNEL_IDS.length === 0) { displayMessage("Nenhum canal configurado."); return; } if (INITIAL_CHANNEL_IDS.length < 2 && direction !== 0) { displayMessage("Apenas um par de canais configurado."); return;} currentVideoErrorCount = 0; currentChannelPairIndex = (currentChannelPairIndex + direction * (INITIAL_CHANNEL_IDS.length > 1 ? 2 : 1) + INITIAL_CHANNEL_IDS.length) % INITIAL_CHANNEL_IDS.length; currentPlaylistPairIndices = [0, 0];  currentVideoPairIndices = [0, 0]; loadVideoPairByCurrentIndices(); }
         function loadVideoPairByCurrentIndices(isReloadAttempt = false) { if (!isReloadAttempt) currentVideoErrorCount = 0; let playlistForMapUpdate; if (channelData.length === 0) { console.warn("loadVideoPairByCurrentIndices: channelData vazio. Usando fallback."); createPlayers('dQw4w9WgXcQ', 'rokGy0huYEA'); playlistForMapUpdate = { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" }; updateMapFromPlaylist(playlistForMapUpdate); return;  } const ch1IdFromInitial = INITIAL_CHANNEL_IDS[currentChannelPairIndex % INITIAL_CHANNEL_IDS.length]; const ch1DataIdx = channelData.findIndex(ch => ch.id === ch1IdFromInitial); let ch2IdFromInitial = null; let ch2DataIdx = -1; if (INITIAL_CHANNEL_IDS.length > 1) { ch2IdFromInitial = INITIAL_CHANNEL_IDS[(currentChannelPairIndex + 1) % INITIAL_CHANNEL_IDS.length]; ch2DataIdx = channelData.findIndex(ch => ch.id === ch2IdFromInitial); } else { ch2IdFromInitial = ch1IdFromInitial; ch2DataIdx = ch1DataIdx; } if (ch1DataIdx === -1) { console.error("loadVideoPairByCurrentIndices: Canal principal (ID:", ch1IdFromInitial,") não encontrado. Usando fallback."); createPlayers('dQw4w9WgXcQ', 'rokGy0huYEA'); updateMapFromPlaylist({ title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" }); return; } const channel1 = channelData[ch1DataIdx]; const channel2 = (ch2DataIdx !== -1 && channelData[ch2DataIdx]) ? channelData[ch2DataIdx] : channel1; const pl1Idx = currentPlaylistPairIndices[0] % (channel1.playlists.length || 1); const pl2Idx = currentPlaylistPairIndices[1] % (channel2.playlists.length || 1); const playlist1Data = channel1.playlists[pl1Idx]; const playlist2Data = channel2.playlists[pl2Idx]; const vid1Id = playlist1Data?.videos[currentVideoPairIndices[0] % (playlist1Data.videos?.length || 1)]?.id; const vid2Id = playlist2Data?.videos[currentVideoPairIndices[1] % (playlist2Data.videos?.length || 1)]?.id || vid1Id; if (vid1Id && vid2Id) { console.log(`loadVideoPairByCurrentIndices: Carregando P1=${vid1Id}, P2=${vid2Id}`); createPlayers(vid1Id, vid2Id); updateMapFromPlaylist(playlist1Data || { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" }); } else { console.error("loadVideoPairByCurrentIndices: IDs de vídeo não encontrados. Usando fallback."); createPlayers('dQw4w9WgXcQ', 'rokGy0huYEA'); updateMapFromPlaylist({ title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" }); }}
         
         // --- Funções do Mapa ---
@@ -381,81 +416,73 @@
         function makeMapDraggable() { mapContainer.onmousedown = function(event) { if (isMapMaximized || !map) return; if (event.target.closest('.leaflet-control-container') || event.target.closest('.leaflet-map-pane')) { if(map && map.dragging && !map.dragging.enabled()) map.dragging.enable(); return; } if (map.dragging && map.dragging.enabled()) map.dragging.disable(); isMapDragging = true; mapContainer.style.cursor = 'grabbing'; mapDragOffset.x = event.clientX - mapContainer.offsetLeft; mapDragOffset.y = event.clientY - mapContainer.offsetTop; }; document.onmousemove = function(event) { if (!isMapDragging || isMapMaximized) return; let newX = event.clientX - mapDragOffset.x; let newY = event.clientY - mapDragOffset.y; const margin = 10; newX = Math.max(margin, Math.min(newX, window.innerWidth - mapContainer.offsetWidth - margin)); newY = Math.max(margin, Math.min(newY, window.innerHeight - mapContainer.offsetHeight - margin)); mapContainer.style.left = newX + 'px'; mapContainer.style.top = newY + 'px'; }; document.onmouseup = function() { if (isMapDragging && map && map.dragging && !isMapMaximized && !map.dragging.enabled()) { map.dragging.enable(); } isMapDragging = false; if (!isMapMaximized) mapContainer.style.cursor = 'grab'; }; }
         function parseCoordinatesFromDescription(description) { if (!description) return null; const patterns = [ /lat:\s*(-?\d+\.?\d*)[,\s]+lon:\s*(-?\d+\.?\d*)/i, /coord(?:enadas)?:\s*(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/i, /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/ ]; for (const pattern of patterns) { const match = description.match(pattern); if (match) return { lat: parseFloat(match[1]), lon: parseFloat(match[2]) }; } console.warn("DEBUG: Coordenadas não encontradas:", description); return null;  }
         
-        function updateMapFromPlaylist(playlist) { 
+        function updateMapFromPlaylist(playlist) {
             if (!map) { console.warn("DEBUG: Mapa não inicializado para updateMapFromPlaylist."); return; }
-            
-            // Limpa todos os marcadores existentes (single e multiple)
             if (currentSingleMarker) { currentSingleMarker.remove(); currentSingleMarker = null; }
             mapMarkers.forEach(marker => marker.remove()); mapMarkers = [];
 
             if (!playlist || !playlist.description) {
                  console.log("DEBUG updateMapFromPlaylist: Playlist inválida ou sem descrição. Usando fallback de visualização.");
-                 map.setView([-23.4334, -45.0719], 13); // Zoom um pouco menor para fallback
+                 map.setView([-23.4334, -45.0719], 13);
                  return;
             }
             const coords = parseCoordinatesFromDescription(playlist.description);
             if (coords) {
                 currentSingleMarker = L.marker([coords.lat, coords.lon]).addTo(map)
                     .bindPopup(`<b>${playlist.title || 'Localização Atual'}</b>`).openPopup();
-                
-                // Garante que o mapa tenha as dimensões corretas e centraliza
-                map.invalidateSize(); 
-                map.setView([coords.lat, coords.lon], 15); // Zoom 15 para PiP, centralizado no marcador
-                
+                map.invalidateSize();
+                map.setView([coords.lat, coords.lon], isMapMaximized ? map.getZoom() : 15); // Mantém zoom se maximizado, senão zoom 15
                 console.log("DEBUG updateMapFromPlaylist: Marcador para:", playlist.title, "em", coords, "Mapa centrado.");
             } else {
                  console.log("DEBUG updateMapFromPlaylist: Coordenadas não encontradas. Usando fallback de visualização.");
                  map.invalidateSize();
-                 map.setView([-23.4334, -45.0719], 10); 
+                 map.setView([-23.4334, -45.0719], 10);
             }
         }
 
-        function updateMapPlaylistMarkers() { 
+        function updateMapPlaylistMarkers() {
             if (!map) { console.warn("DEBUG: Mapa não inicializado para marcadores múltiplos."); return; }
-            
-            // Limpa todos os marcadores antes de adicionar novos
             if (currentSingleMarker) { currentSingleMarker.remove(); currentSingleMarker = null; }
             mapMarkers.forEach(marker => marker.remove()); mapMarkers = [];
-
             let allValidCoords = [];
 
-            if (channelData.length === 0) { 
+            if (channelData.length === 0) {
                 console.log("DEBUG updateMapPlaylistMarkers: Sem dados de canal. Exibindo fallback.");
                 const fallbackPlaylist = { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" };
-                updateMapFromPlaylist(fallbackPlaylist); // Usa a função de marcador único para o fallback
-                return; 
+                updateMapFromPlaylist(fallbackPlaylist);
+                return;
             }
 
-            channelData.forEach((ch) => { 
-                ch.playlists.forEach((pl) => { 
-                    if (pl.description) { 
-                        const coords = parseCoordinatesFromDescription(pl.description); 
-                        if (coords) { 
-                            const marker = L.marker([coords.lat, coords.lon]).addTo(map).bindPopup(`<b>${pl.title}</b><br><small>${ch.id}</small>`); 
-                            marker.on('click', () => { 
-                                if (isMapMaximized) { 
+            channelData.forEach((ch) => {
+                ch.playlists.forEach((pl) => {
+                    if (pl.description) {
+                        const coords = parseCoordinatesFromDescription(pl.description);
+                        if (coords) {
+                            const marker = L.marker([coords.lat, coords.lon]).addTo(map).bindPopup(`<b>${pl.title}</b><br><small>${ch.id}</small>`);
+                            marker.on('click', () => {
+                                if (isMapMaximized) {
                                     let actualChannelIndex = channelData.findIndex(c => c.id === ch.id);
                                     let actualPlaylistIndex = channelData[actualChannelIndex]?.playlists.findIndex(p => p.id === pl.id);
                                     if (actualChannelIndex !== -1 && actualPlaylistIndex !== -1) {
-                                        currentChannelPairIndex = actualChannelIndex; 
+                                        currentChannelPairIndex = INITIAL_CHANNEL_IDS.indexOf(ch.id); // Ajusta para o índice da lista original
                                         currentPlaylistPairIndices[0] = actualPlaylistIndex;
-                                        currentPlaylistPairIndices[1] = 0; 
+                                        currentPlaylistPairIndices[1] = 0; // Resetar o segundo player para a primeira playlist do canal seguinte (ou mesmo canal)
                                         currentVideoPairIndices = [0,0];
-                                        loadVideoPairByCurrentIndices(); 
-                                        toggleMapMaximize(); 
+                                        loadVideoPairByCurrentIndices();
+                                        toggleMapMaximize(); // Volta para o modo PiP
                                     }
-                                } 
-                            }); 
-                            mapMarkers.push(marker); 
+                                }
+                            });
+                            mapMarkers.push(marker);
                             allValidCoords.push(marker.getLatLng());
-                        } 
-                    } 
-                }); 
-            }); 
+                        }
+                    }
+                });
+            });
             
             if (allValidCoords.length > 0) {
                  const bounds = L.latLngBounds(allValidCoords);
-                 if (bounds.isValid()) map.fitBounds(bounds.pad(0.1));  
+                 if (bounds.isValid()) map.fitBounds(bounds.pad(0.1));
             } else {
                 console.log("DEBUG updateMapPlaylistMarkers: Nenhum marcador com coordenadas válidas. Usando fallback de visualização.");
                 map.setView([-23.4334, -45.0719], 10);
@@ -463,143 +490,188 @@
             console.log("DEBUG: updateMapPlaylistMarkers concluído. Total de marcadores:", mapMarkers.length);
         }
         
-        function toggleMapMaximize() { 
-            isMapMaximized = !isMapMaximized; 
-            mapContainer.classList.toggle('maximized', isMapMaximized); 
+        function toggleMapMaximize() {
+            isMapMaximized = !isMapMaximized;
+            mapContainer.classList.toggle('maximized', isMapMaximized);
             
-            requestAnimationFrame(() => { 
-                setTimeout(() => { 
+            requestAnimationFrame(() => { // Garante que a mudança de classe foi aplicada
+                setTimeout(() => { // Delay adicional para transições CSS completarem
                     if (map) {
-                        map.invalidateSize(); 
+                        map.invalidateSize();
                         console.log("DEBUG toggleMapMaximize: map.invalidateSize() chamado.");
                         if (isMapMaximized) {
-                            if (map.dragging && !map.dragging.enabled()) map.dragging.enable(); 
+                            if (map.dragging && !map.dragging.enabled()) map.dragging.enable();
                             if (map.scrollWheelZoom && !map.scrollWheelZoom.enabled()) map.scrollWheelZoom.enable();
-                            mapContainer.style.cursor = 'default'; 
-                            updateMapPlaylistMarkers(); 
-                        } else { 
-                            if (map.dragging && map.dragging.enabled()) map.dragging.disable(); 
+                            mapContainer.style.cursor = 'default';
+                            updateMapPlaylistMarkers(); // Mostra todos os marcadores
+                        } else { // Voltando para PiP
+                            if (map.dragging && map.dragging.enabled()) map.dragging.disable();
                             if (map.scrollWheelZoom && map.scrollWheelZoom.enabled()) map.scrollWheelZoom.disable();
-                            mapContainer.style.cursor = 'grab'; 
+                            mapContainer.style.cursor = 'grab';
                             let playlistToFocus;
-                            if (channelData.length > 0 && channelData[currentChannelPairIndex % channelData.length]?.playlists[currentPlaylistPairIndices[0]]) {
-                                playlistToFocus = channelData[currentChannelPairIndex % channelData.length].playlists[currentPlaylistPairIndices[0]];
+                            const ch1DataIdx = channelData.findIndex(ch => ch.id === INITIAL_CHANNEL_IDS[currentChannelPairIndex % INITIAL_CHANNEL_IDS.length]);
+                            if (ch1DataIdx !== -1 && channelData[ch1DataIdx]?.playlists[currentPlaylistPairIndices[0]]) {
+                                playlistToFocus = channelData[ch1DataIdx].playlists[currentPlaylistPairIndices[0]];
                             } else {
                                 playlistToFocus = { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" };
                             }
-                            updateMapFromPlaylist(playlistToFocus); 
+                            updateMapFromPlaylist(playlistToFocus); // Foca no marcador da playlist atual
                         }
                     }
-                }, 200); 
+                }, 200); // Ajuste o delay conforme necessário para suas transições CSS
             });
         }
         
         // --- Pagamentos ---
-        let stripe; 
+        let stripe;
         if (STRIPE_PUBLIC_KEY) {
-            try { stripe = Stripe(STRIPE_PUBLIC_KEY); } catch (e) { console.error("Erro Stripe init:", e); }
-        } else { console.warn("Stripe PK em falta."); }
+            try { stripe = Stripe(STRIPE_PUBLIC_KEY); } catch (e) { console.error("Erro Stripe init:", e); displayMessage("Erro ao iniciar Stripe."); }
+        } else { console.warn("Stripe PK em falta."); displayMessage("Chave Stripe não configurada."); }
 
-        googlePayButton.addEventListener('click', async () => { 
-            if (!stripe) { displayMessage("Stripe não configurado."); return; } 
-            const amount = parseFloat(contributionAmountInput.value); 
-            if (isNaN(amount) || amount <= 0) { displayMessage("Valor inválido."); return; }
+        googlePayButton.addEventListener('click', async () => {
+            if (!stripe) { displayMessage("Stripe não configurado."); return; }
+            const amount = parseFloat(contributionAmountInput.value);
+            if (isNaN(amount) || amount <= 0) { displayMessage("Valor inválido para contribuição."); return; }
             
             displayMessage("A processar pagamento com Stripe...");
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            // Verifica se está em ambiente de produção (Vercel) ou local
+            const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+
+            if (!isProduction) { // Ambiente Local
                 console.log(`DEBUG Stripe (Local): Usando Price ID fixo (${STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST}) para teste. Valor (não usado com este Price ID): ${amount}`);
                 if (STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST === 'price_YOUR_FIXED_PRICE_ID_HERE' || !STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST) {
                     displayMessage("Stripe: Configure STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST com um Price ID de preço FIXO para testes locais.");
-                    console.error("Stripe: STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST não configurado."); return;
+                    console.error("Stripe: STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST não configurado ou é o placeholder."); return;
                 }
                  try {
-                    const { error } = await stripe.redirectToCheckout({ 
-                        lineItems: [{ price: STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST, quantity: 1 }], 
-                        mode: 'payment', 
-                        successUrl: `${window.location.origin}?stripe_payment=success_local`, 
-                        cancelUrl: `${window.location.origin}?stripe_payment=cancelled_local`, 
-                    }); 
-                    if (error) { console.error('Erro Stripe (Local):', error); displayMessage(`Erro Stripe: ${error.message}`); } 
-                } catch (e) { console.error('Erro Stripe (Local):', e); displayMessage(`Erro Stripe: ${e.message}`); }
-            } else {
+                    const { error } = await stripe.redirectToCheckout({
+                        lineItems: [{ price: STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST, quantity: 1 }],
+                        mode: 'payment',
+                        successUrl: `${window.location.origin}${window.location.pathname}?stripe_payment=success_local`, // Adiciona pathname para manter a página
+                        cancelUrl: `${window.location.origin}${window.location.pathname}?stripe_payment=cancelled_local`,
+                    });
+                    if (error) { console.error('Erro Stripe (Local):', error); displayMessage(`Erro Stripe: ${error.message}`); }
+                } catch (e) { console.error('Exceção Stripe (Local):', e); displayMessage(`Erro Stripe: ${e.message}`); }
+            } else { // Ambiente de Deploy (Vercel)
                 console.log(`DEBUG Stripe (Deploy): Tentando chamar /api/create-stripe-session. Valor: ${amount}`);
                 try {
-                    const response = await fetch('/api/create-stripe-session', { 
+                    const response = await fetch('/api/create-stripe-session', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', },
-                        body: JSON.stringify({ amount: amount, currency: 'BRL' }),
+                        body: JSON.stringify({ amount: amount, currency: 'BRL' }), // Envia como BRL
                     });
                     const sessionData = await response.json();
                     if (!response.ok || sessionData.error) {
                         throw new Error(sessionData.error || `Erro do servidor: ${response.statusText} (${response.status})`);
                     }
                     const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.sessionId });
-                    if (error) { console.error('Erro Stripe redirectToCheckout (Deploy):', error); displayMessage(`Erro Stripe: ${error.message}`); } 
+                    if (error) { console.error('Erro Stripe redirectToCheckout (Deploy):', error); displayMessage(`Erro Stripe: ${error.message}`); }
                 } catch (e) { console.error('Erro ao chamar API Stripe ou redirecionar (Deploy):', e); displayMessage(`Erro Stripe: ${e.message}`); }
             }
         });
         
-        applePayButton.addEventListener('click', () => { googlePayButton.click(); displayMessage("Apple Pay (Stripe) - Usando fluxo do Google Pay para demonstração."); });
+        applePayButton.addEventListener('click', () => {
+            // Apple Pay requer configuração mais complexa e geralmente é tratado pelo Stripe Elements ou Payment Request Button
+            // Por enquanto, redireciona para o fluxo do Google Pay/Stripe Checkout como placeholder
+            displayMessage("Apple Pay (via Stripe) - Demonstração. Usando fluxo de pagamento padrão.");
+            googlePayButton.click();
+        });
         
-        let mp; 
+        let mp;
         if (MERCADO_PAGO_PUBLIC_KEY) {
-            try { mp = new MercadoPago(MERCADO_PAGO_PUBLIC_KEY, { locale: 'pt-BR'});} 
-            catch (e) { console.error("Erro Mercado Pago init:", e); }
-        } else { console.warn("MP PK em falta."); }
+            try { mp = new MercadoPago(MERCADO_PAGO_PUBLIC_KEY, { locale: 'pt-BR'});}
+            catch (e) { console.error("Erro Mercado Pago init:", e); displayMessage("Erro ao iniciar Mercado Pago.");}
+        } else { console.warn("MP PK em falta."); displayMessage("Chave Mercado Pago não configurada.");}
 
         async function renderPixPaymentBrick(transactionAmount) {
             if (!mp) { displayMessage("Mercado Pago não configurado."); return; }
-            if (mpBrickController) { 
+            if (mpBrickController) {
                 try { mpBrickController.unmount(); } catch(e) { console.warn("Erro ao desmontar brick MP:", e)}
             }
-            pixPaymentBrickContainer.innerHTML = ''; 
+            pixPaymentBrickContainer.innerHTML = ''; // Limpa o container
             const bricksBuilder = mp.bricks();
             try {
                 console.log("DEBUG MP: Renderizando Payment Brick, valor:", transactionAmount);
                 const paymentBrickSettings = {
                     initialization: {
-                        amount: transactionAmount,
-                        payer: { email: "test_user_" + Date.now() + "@testuser.com" },
+                        amount: transactionAmount, // Valor da transação
+                        payer: { // Informações do pagador (opcional para PIX, mas bom para consistência)
+                            email: "test_user_" + Date.now() + "@testuser.com", // Email de teste
+                        },
                     },
                     customization: {
                         paymentMethods: {
-                             // Tentativa de configuração mais aberta para incluir PIX
-                             mercadoPago: 'all', 
+                            pix: 'all', // Habilita PIX explicitamente
+                            // mercadoPago: ['pix'], // Alternativa para focar apenas no PIX via MercadoPago
                         },
-                         visual: { style: { theme: 'dark' } }
+                         visual: {
+                            style: {
+                                theme: 'dark', // 'dark', 'light', ou 'bootstrap'
+                            }
+                        }
                     },
                     callbacks: {
-                        onReady: () => { console.log("DEBUG MP: Payment Brick pronto!"); },
-                        onSubmit: async ({ formData }) => {
-                            console.log("DEBUG MP: onSubmit Brick.", formData);
-                            displayMessage("Processando pagamento (simulação)...");
-                            return new Promise((resolve) => {
+                        onReady: () => { console.log("DEBUG MP: Payment Brick pronto!"); displayMessage("Formulário PIX pronto.", false, 2000); },
+                        onSubmit: async ({ selectedPaymentMethod, formData }) => {
+                            console.log("DEBUG MP: onSubmit Brick.", {selectedPaymentMethod, formData});
+                            // Aqui você normalmente enviaria formData para seu backend para criar o pagamento
+                            // Para este exemplo, simularemos o processamento
+                            displayMessage("Processando pagamento PIX (simulação)...");
+                            return new Promise((resolve, reject) => {
                                 setTimeout(() => {
-                                    alert(`Simulação: Pagamento de R$${transactionAmount} processado.`);
-                                    displayMessage("Pagamento processado (simulação)!");
+                                    // Simulação de sucesso
+                                    console.log("Simulação MP: Pagamento PIX processado para R$", transactionAmount);
+                                    displayMessage(`PIX de R$${transactionAmount.toFixed(2)} processado (simulação)!`, false, 5000);
+                                    // Em um caso real, você receberia um ID de pagamento do backend
+                                    // e poderia redirecionar ou mostrar uma mensagem de sucesso.
+                                    // Para o brick, apenas resolvemos a promessa para indicar que o "submit" foi tratado.
+                                    if (mpBrickController) {
+                                        try { mpBrickController.unmount(); } catch(e) { console.warn("Erro ao desmontar brick MP pós-submit:", e)}
+                                    }
+                                    pixPaymentBrickContainer.innerHTML = '<p class="text-green-400 text-center">Pagamento PIX simulado com sucesso!</p>';
                                     resolve();
-                                }, 2000);
+
+                                    // Exemplo de como seria com backend:
+                                    /*
+                                    fetch("/api/process-mp-payment", {
+                                        method: "POST",
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify(formData)
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        // Lidar com a resposta do backend (ex: exibir QR Code, status)
+                                        console.log("Resposta do backend MP:", data);
+                                        resolve();
+                                    })
+                                    .catch(error => {
+                                        console.error("Erro ao processar pagamento MP no backend:", error);
+                                        reject(error);
+                                    });
+                                    */
+                                }, 3000);
                             });
                         },
                         onError: (error) => {
                             console.error("DEBUG MP: Erro no Brick:", error);
-                            displayMessage("Erro no formulário de pagamento: " + (error.message || JSON.stringify(error)));
+                            displayMessage("Erro no formulário PIX: " + (error.message || JSON.stringify(error.cause || error)));
                         },
                     },
                 };
                 mpBrickController = await bricksBuilder.create("payment", "pix-payment-brick-container", paymentBrickSettings);
             } catch (error) {
                 console.error("DEBUG MP: Erro ao criar Payment Brick:", error);
-                displayMessage("Erro ao inicializar formulário de pagamento Mercado Pago.");
+                displayMessage("Erro ao inicializar formulário PIX Mercado Pago.");
             }
         }
 
         pixButton.addEventListener('click', async () => {
             if (!mp) { displayMessage("Mercado Pago não configurado."); return; }
             const amount = parseFloat(contributionAmountInput.value);
-            if (isNaN(amount) || amount <= 0.01) { 
-                displayMessage("Valor inválido (Ex: >= R$0.01)."); return;
+            if (isNaN(amount) || amount < 0.01) { // Mercado Pago pode ter valor mínimo
+                displayMessage("Valor inválido para PIX (Ex: >= R$0.01)."); return;
             }
+            displayMessage("Abrindo formulário PIX...", false, 2000);
             renderPixPaymentBrick(amount);
         });
 
@@ -611,15 +683,18 @@
         window.onload = () => {
             console.log("DEBUG: window.onload disparado.");
             const tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api"; 
+            // tag.src = "https://www.youtube.com/iframe_api"; // URL correta da API
+            tag.src = "https://www.youtube.com/iframe_api"; // Mantendo a URL original do usuário, mas pode ser a causa de problemas de origem.
+                                                                // A URL correta e oficial é "https://www.youtube.com/iframe_api"
             const firstScriptTag = document.getElementsByTagName('script')[0];
             if (firstScriptTag && firstScriptTag.parentNode) {
                 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
             } else {
+                // Fallback se não houver scripts (improvável, pois este script está aqui)
                 document.head.appendChild(tag);
             }
-            initMap(); 
-            updateIdDisplays(); 
+            initMap(); // Inicializa o mapa
+            updateIdDisplays(); // Atualiza os IDs na tela
         };
     </script>
 </body>
