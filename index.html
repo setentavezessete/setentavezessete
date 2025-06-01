@@ -64,7 +64,7 @@
         
         .player-unit { 
             display: flex;
-            align-items: center; /* Alinha verticalmente o slider e o vídeo */
+            align-items: center; 
             width: 100%; 
             position: relative;
         }
@@ -75,8 +75,8 @@
             justify-content: center; 
             padding: 0 0.25rem; 
             flex-shrink: 0; 
-            height: 85%; /* Para ser quase do tamanho do vídeo */
-            align-self: center; /* Centraliza o container do slider na altura do player-unit */
+            height: 85%; 
+            align-self: center; 
         }
       
         .video-outer-container { 
@@ -171,14 +171,14 @@
         /* Estilo dos Sliders (Velocidade e Sincronia) */
         .horizontal-sliders-container {
             width: 100%; 
-            max-width: calc(100% - 3rem); /* Ajustado para nova largura dos volumes */
+            max-width: calc(100% - 3rem); 
             margin-left: auto;
             margin-right: auto;
             box-sizing: border-box;
         }
          @media (min-width: 768px) {
              .horizontal-sliders-container {
-                 max-width: 22rem; /* Reduzido para alinhar melhor com os players */
+                 max-width: 22rem; 
              }
          }
 
@@ -214,9 +214,9 @@
             -webkit-appearance: slider-vertical; 
             width: 1.25rem; 
             padding: 0 3px; 
-            background: #4B5563; /* Cinza para o track */
+            background: #4B5563; 
             border-radius: 0.25rem;
-            height: 100%; /* Ocupa altura do .volume-slider-container */
+            height: 100%; 
         }
         input[type="range"].volume-slider-vertical::-webkit-slider-runnable-track { 
             background: transparent; 
@@ -369,13 +369,13 @@
         #top-center-chinese-text {
             position: fixed;
             top: 10px; 
-            left: 100px; /* Ajustado para dar mais espaço ao botão 70x07 */
-            right: 110px; /* Ajustado para dar mais espaço ao botão Upgrade */
+            left: 100px; 
+            right: 110px; 
             z-index: 1005;
             padding: 0.5rem 0.1rem; 
             background-color: rgba(31, 41, 55, 0.7); 
             border-radius: 0.375rem;
-            font-size: 0.75rem; /* Reduzido */
+            font-size: 0.75rem; 
             text-align: center;
             color: #e5e7eb; 
             letter-spacing: 0.05em;
