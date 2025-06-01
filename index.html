@@ -57,14 +57,14 @@
         #player-wrapper { 
             display: flex; 
             flex-grow: 1; 
-            gap: 0.5rem; /* Espaço entre os .player-unit em desktop */
+            gap: 0.5rem; 
             margin-bottom: 0.5rem; 
             width: 100%; 
         }
         
         .player-unit { 
             display: flex;
-            align-items: stretch; 
+            align-items: center; /* Alinha verticalmente o slider e o vídeo */
             width: 100%; 
             position: relative;
         }
@@ -73,9 +73,10 @@
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            padding: 0 0.25rem; /* Espaçamento mínimo para o slider de volume */
+            padding: 0 0.25rem; 
             flex-shrink: 0; 
-            /* A altura do slider de volume será definida por classes Tailwind no HTML */
+            height: 85%; /* Para ser quase do tamanho do vídeo */
+            align-self: center; /* Centraliza o container do slider na altura do player-unit */
         }
       
         .video-outer-container { 
@@ -83,7 +84,7 @@
             position: relative; 
         }
         
-        @media (min-width: 768px) { /* Lado a lado em desktop */
+        @media (min-width: 768px) { 
             #player-wrapper {
                  flex-direction: row;
             }
@@ -91,12 +92,12 @@
                 width: 50%; 
             }
              .volume-slider-container { 
-                padding: 0 0.35rem; /* Um pouco mais de espaço em desktop */
+                padding: 0 0.35rem;
             }
         }
-        @media (max-width: 767px) { /* Empilhado em mobile */
+        @media (max-width: 767px) { 
             .video-controls-container {
-                margin-left: 0; /* Remove margem para ocupar tela inteira */
+                margin-left: 0; 
                 margin-right: 0;
                 width: 100%;
                 padding-left: 0; 
@@ -104,14 +105,13 @@
             }
              #player-wrapper {
                 flex-direction: column;
-                align-items: stretch; /* Faz os .player-unit ocuparem a largura */
-                gap: 0.75rem; /* Espaço entre os players empilhados */
+                align-items: stretch; 
+                gap: 0.75rem; 
             }
             .player-unit {
                 width: 100%; 
             }
-             /* Elementos abaixo dos vídeos mantêm um padding para não colar nas bordas */
-            .video-controls-container > .my-2.w-full.horizontal-sliders-container,
+            .horizontal-sliders-container,
             .video-controls-container > .my-3.flex.flex-wrap.justify-center {
                 padding-left: 0.5rem;
                 padding-right: 0.5rem;
@@ -214,12 +214,12 @@
             -webkit-appearance: slider-vertical; 
             width: 1.25rem; 
             padding: 0 3px; 
-            background: #374151; /* Cinza mais escuro para o fundo do input */
+            background: #4B5563; /* Cinza para o track */
             border-radius: 0.25rem;
-            /* A altura será definida pelas classes Tailwind no HTML */
+            height: 100%; /* Ocupa altura do .volume-slider-container */
         }
         input[type="range"].volume-slider-vertical::-webkit-slider-runnable-track { 
-            background: transparent; /* Track em si é transparente, o fundo do input dá a cor */
+            background: transparent; 
             width: 0.25rem; 
             height: 100%; 
             border-radius: 0.125rem;
@@ -237,7 +237,7 @@
             background-color: #0054A6; /* Azul Royal */
             height: 1.25rem; width: 1.25rem; 
             border-radius: 50%; 
-            border: 1px solid rgba(229, 231, 235, 0.4); /* Linha branca bem esmaecida (gray-200 com alpha) */
+            border: 1px solid rgba(229, 231, 235, 0.4); 
             cursor: pointer;
         }
         input[type="range"].volume-slider-vertical::-moz-range-thumb { 
@@ -248,7 +248,6 @@
             cursor: pointer;
         }
         input[type="range"].volume-slider-vertical.royal-blue-fill {
-            /* O gradiente simula o preenchimento azul abaixo do thumb e cinza acima */
             background: linear-gradient(to top, #0054A6 var(--value-percent, 50%), #4B5563 var(--value-percent, 50%));
         }
         
@@ -370,13 +369,13 @@
         #top-center-chinese-text {
             position: fixed;
             top: 10px; 
-            left: 95px; /* Ajustado para dar mais espaço ao botão 70x07 */
-            right: 105px; /* Ajustado para dar mais espaço ao botão Upgrade */
+            left: 100px; /* Ajustado para dar mais espaço ao botão 70x07 */
+            right: 110px; /* Ajustado para dar mais espaço ao botão Upgrade */
             z-index: 1005;
             padding: 0.5rem 0.1rem; 
             background-color: rgba(31, 41, 55, 0.7); 
             border-radius: 0.375rem;
-            font-size: 0.8rem; /* Reduzido */
+            font-size: 0.75rem; /* Reduzido */
             text-align: center;
             color: #e5e7eb; 
             letter-spacing: 0.05em;
@@ -410,7 +409,7 @@
             <div id="player-wrapper" class="flex flex-wrap md:flex-nowrap"> 
                 <div class="player-unit w-full md:w-1/2 flex p-1">
                     <div class="volume-slider-container">
-                        <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-[calc(100%-1rem)]" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
+                        <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-[85%]" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
                     </div>
                     <div id="video-outer-container-1" class="video-outer-container flex-grow">
                         <div id="video-container-1" class="video-container">
@@ -424,7 +423,7 @@
 
                 <div class="player-unit w-full md:w-1/2 flex p-1">
                     <div class="volume-slider-container">
-                        <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-[calc(100%-1rem)]" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
+                        <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-[85%]" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
                     </div>
                     <div id="video-outer-container-2" class="video-outer-container flex-grow">
                         <div id="video-container-2" class="video-container">
