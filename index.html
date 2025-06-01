@@ -34,14 +34,14 @@
             overflow-y: auto; 
             padding-left: 0.5rem; 
             padding-right: 0.5rem;
-            padding-top: 90px; 
+            padding-top: 80px; /* Ajustado para texto chinês */
             padding-bottom: 270px; 
         }
         @media (min-width: 768px) { 
             .main-content-area {
                 padding-left: 1rem; 
                 padding-right: 1rem;
-                padding-top: 100px; 
+                padding-top: 85px; 
                 padding-bottom: 270px; 
             }
         }
@@ -53,70 +53,73 @@
             margin-right: auto;
             box-sizing: border-box;
         }
-
-        /* Removido .video-row-wrapper, lógica integrada no #player-wrapper e .player-unit */
+         /* Em telas de telemóvel, o container dos vídeos ocupa a largura toda */
+        @media (max-width: 767px) {
+            .video-controls-container {
+                margin-left: -0.5rem; /* Compensa o padding de .main-content-area */
+                margin-right: -0.5rem;
+                width: calc(100% + 1rem); /* Ocupa a largura total da tela */
+                padding-left: 0; 
+                padding-right: 0;
+            }
+             /* Elementos abaixo dos vídeos mantêm um padding para não colar nas bordas */
+            .video-controls-container > .my-2.w-full.horizontal-sliders-container,
+            .video-controls-container > .my-3.flex.flex-wrap.justify-center {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+                width: 100%; /* Ajusta para ser 100% do pai, que agora tem padding aplicado */
+                box-sizing: border-box;
+            }
+        }
         
         #player-wrapper { 
             display: flex; 
+            flex-grow: 1; 
             gap: 0.5rem; 
             margin-bottom: 0.5rem; 
             width: 100%; 
         }
         
-        .player-unit { /* Novo container para [volume + video] */
+        .player-unit { 
             display: flex;
-            align-items: stretch; /* Para que o volume e vídeo tenham a mesma altura */
-            width: 100%; /* Padrão para mobile, empilhado */
+            align-items: stretch; 
+            width: 100%; 
             position: relative;
         }
 
         .volume-slider-container { 
             display: flex; 
-            align-items: center; /* Centraliza o input range verticalmente */
+            align-items: center; 
             justify-content: center; 
-            padding: 0 0.25rem; /* Espaçamento mínimo para o slider de volume */
-            flex-shrink: 0; /* Não encolher */
+            padding: 0 0.1rem; 
+            flex-shrink: 0; 
+            /* A altura será definida pela altura do .player-unit */
         }
       
         .video-outer-container { 
-            flex-grow: 1; /* Ocupa o restante do espaço no .player-unit */
+            flex-grow: 1; 
             position: relative; 
         }
         
-        @media (min-width: 768px) { /* Lado a lado em desktop */
+        @media (min-width: 768px) { 
             #player-wrapper {
                  flex-direction: row;
             }
             .player-unit {
-                width: 50%;
+                width: 50%; 
+            }
+             .volume-slider-container { 
+                padding: 0 0.25rem;
             }
         }
-        @media (max-width: 767px) { /* Empilhado em mobile */
-            .video-controls-container { 
-                margin-left: 0; 
-                margin-right: 0; 
-                width: 100%; 
-                padding-left: 0; 
-                padding-right: 0;
-            }
-            #player-wrapper { 
+        @media (max-width: 767px) { 
+             #player-wrapper {
                 flex-direction: column;
-                align-items: center; 
-                gap: 1rem; /* Espaço entre os players empilhados */
+                align-items: stretch; /* Para que os .player-unit ocupem a largura */
+                gap: 1rem; 
             }
             .player-unit {
                 width: 100%; 
-            }
-             .volume-slider-container { 
-                padding: 0 0.1rem; /* Menor padding em mobile */
-            }
-            /* Elementos abaixo dos vídeos mantêm padding */
-            .video-controls-container > .my-2.w-full.horizontal-sliders-container,
-            .video-controls-container > .my-3.flex.flex-wrap.justify-center {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-                width: 100%; 
-                box-sizing: border-box;
             }
         }
 
@@ -130,7 +133,7 @@
         }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         
-        .maximized .player-unit { width: 100% !important; } /* Ajustado para maximizar a unidade player+volume */
+        .maximized .player-unit { width: 100% !important; } 
         .maximized .video-outer-container { width: auto !important; flex-grow: 1 !important; }
         .hidden-player-unit { display: none !important; }
 
@@ -171,14 +174,15 @@
 
         /* Estilo dos Sliders (Velocidade e Sincronia) */
         .horizontal-sliders-container {
-            width: 100%; /* Ocupa a largura do pai, que terá padding se necessário */
-            max-width: 20rem; /* Limita a largura dos sliders horizontais */
+            width: 100%; 
+            max-width: calc(100% - 4rem); /* Ajustado para nova largura dos volumes */
             margin-left: auto;
             margin-right: auto;
+            box-sizing: border-box;
         }
          @media (min-width: 768px) {
              .horizontal-sliders-container {
-                 max-width: 24rem; /* Um pouco maior em desktop */
+                 max-width: 24rem; 
              }
          }
 
@@ -214,12 +218,12 @@
             -webkit-appearance: slider-vertical; 
             width: 1.25rem; 
             padding: 0 3px; 
-            background: #4B5563; 
+            background: #4B5563; /* Cinza para o track */
             border-radius: 0.25rem;
-            height: 100%; /* Ocupa a altura do .volume-slider-container que é esticado */
+            height: 100%; /* Ocupa altura do .player-unit */
         }
         input[type="range"].volume-slider-vertical::-webkit-slider-runnable-track { 
-            background: transparent; 
+            background: transparent; /* Track em si é transparente */
             width: 0.25rem; 
             height: 100%; 
             border-radius: 0.125rem;
@@ -247,7 +251,9 @@
             border: 1px solid rgba(255,255,255,0.3); 
             cursor: pointer;
         }
+        /* Efeito de preenchimento para Webkit (Azul Royal) */
         input[type="range"].volume-slider-vertical.royal-blue-fill {
+            /* O gradiente simula o preenchimento */
             background: linear-gradient(to top, #0054A6 var(--value-percent, 50%), #4B5563 var(--value-percent, 50%));
         }
         
@@ -369,20 +375,20 @@
         #top-center-chinese-text {
             position: fixed;
             top: 10px; 
-            left: 75px; /* Espaço para o botão 70x07 e um pouco de margem */
-            right: 75px; /* Espaço para o botão Upgrade e um pouco de margem */
+            left: 85px; /* Ajustado para dar mais espaço ao botão esquerdo */
+            right: 95px; /* Ajustado para dar mais espaço ao botão direito */
             z-index: 1005;
-            padding: 0.5rem 0.25rem; 
+            padding: 0.5rem 0.1rem; 
             background-color: rgba(31, 41, 55, 0.7); 
             border-radius: 0.375rem;
-            font-size: 1rem; 
+            font-size: 0.75rem; /* Reduzido */
             text-align: center;
             color: #e5e7eb; 
             letter-spacing: 0.05em;
             box-sizing: border-box;
-            /* white-space: nowrap; Removido para permitir quebra de linha */
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: normal; 
         }
         #pix-payment-brick-container { margin-top: 0.75rem; }
     </style>
@@ -406,9 +412,10 @@
                 <input type="range" id="speed-slider" min="0.07" max="3" step="0.01" value="1" class="styled-slider w-full" title="Ajustar velocidade" aria-label="Ajustar velocidade">
             </div>
             
-            <div id="player-wrapper" class="flex flex-wrap"> <div class="player-unit w-full md:w-1/2 flex p-1">
+            <div id="player-wrapper" class="flex flex-wrap md:flex-nowrap"> 
+                <div class="player-unit w-full md:w-1/2 flex p-1">
                     <div class="volume-slider-container">
-                        <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-full" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
+                        <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
                     </div>
                     <div id="video-outer-container-1" class="video-outer-container flex-grow">
                         <div id="video-container-1" class="video-container">
@@ -422,7 +429,7 @@
 
                 <div class="player-unit w-full md:w-1/2 flex p-1">
                     <div class="volume-slider-container">
-                        <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-full" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
+                        <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
                     </div>
                     <div id="video-outer-container-2" class="video-outer-container flex-grow">
                         <div id="video-container-2" class="video-container">
@@ -824,10 +831,10 @@
                 let lastTapTime = 0; 
                 container.addEventListener('touchend', function(event) { 
                     const currentTime = new Date().getTime(); 
-                    if (currentTime - lastTapTime < 300) { event.preventDefault(); toggleMaximize(container.parentElement); } 
+                    if (currentTime - lastTapTime < 300) { event.preventDefault(); toggleMaximize(container.parentElement.parentElement); /* Ajustado para .player-unit */ } 
                     lastTapTime = currentTime; 
                 }); 
-                container.addEventListener('dblclick', () => toggleMaximize(container.parentElement)); 
+                container.addEventListener('dblclick', () => toggleMaximize(container.parentElement.parentElement)); /* Ajustado para .player-unit */
             });
             if (mapElementElem) mapElementElem.addEventListener('dblclick', toggleMapMaximize); 
             if (mapGpsButtonElem) { mapGpsButtonElem.addEventListener('click', () => { displayUserMessage("Funcionalidade GPS a ser implementada.", false, "info"); }); }
