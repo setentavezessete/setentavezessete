@@ -34,7 +34,7 @@
             overflow-y: auto; 
             padding-left: 0.5rem; 
             padding-right: 0.5rem;
-            padding-top: 95px; /* Aumentado para dar mais espaço ao texto chinês e botões */
+            padding-top: 90px; 
             padding-bottom: 270px; 
         }
         @media (min-width: 768px) { 
@@ -54,43 +54,44 @@
             box-sizing: border-box;
         }
 
-        .video-row-wrapper { display: flex; width: 100%; position: relative; align-items: stretch; }
+        /* Removido .video-row-wrapper, lógica integrada no #player-wrapper e .player-unit */
         
-        .volume-slider-container { 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            padding-left: 0.25rem; /* Reduzido para colar mais os volumes */
-            padding-right: 0.25rem; /* Reduzido para colar mais os volumes */
-        }
-      
-
         #player-wrapper { 
             display: flex; 
-            flex-grow: 1; 
-            gap: 0.25rem; /* Diminuído o gap para aproximar os vídeos */
+            gap: 0.5rem; 
             margin-bottom: 0.5rem; 
             width: 100%; 
         }
         
+        .player-unit { /* Novo container para [volume + video] */
+            display: flex;
+            align-items: stretch; /* Para que o volume e vídeo tenham a mesma altura */
+            width: 100%; /* Padrão para mobile, empilhado */
+            position: relative;
+        }
+
+        .volume-slider-container { 
+            display: flex; 
+            align-items: center; /* Centraliza o input range verticalmente */
+            justify-content: center; 
+            padding: 0 0.25rem; /* Espaçamento mínimo para o slider de volume */
+            flex-shrink: 0; /* Não encolher */
+        }
+      
         .video-outer-container { 
-            width: 100%; 
+            flex-grow: 1; /* Ocupa o restante do espaço no .player-unit */
             position: relative; 
         }
-        @media (min-width: 768px) { 
-            .video-outer-container {
-                width: 50%;
-            }
+        
+        @media (min-width: 768px) { /* Lado a lado em desktop */
             #player-wrapper {
                  flex-direction: row;
-                 gap: 0.5rem; /* Mantém o gap original para desktop */
             }
-             .volume-slider-container { 
-                padding-left: 0.5rem; 
-                padding-right: 0.5rem; 
+            .player-unit {
+                width: 50%;
             }
         }
-        @media (max-width: 767px) { 
+        @media (max-width: 767px) { /* Empilhado em mobile */
             .video-controls-container { 
                 margin-left: 0; 
                 margin-right: 0; 
@@ -101,12 +102,16 @@
             #player-wrapper { 
                 flex-direction: column;
                 align-items: center; 
-                gap: 0.5rem; /* Gap entre vídeos empilhados */
+                gap: 1rem; /* Espaço entre os players empilhados */
             }
-            .video-outer-container {
-                width: 100%; /* Vídeos ocupam 100% do player-wrapper */
+            .player-unit {
+                width: 100%; 
             }
-            .horizontal-sliders-container,
+             .volume-slider-container { 
+                padding: 0 0.1rem; /* Menor padding em mobile */
+            }
+            /* Elementos abaixo dos vídeos mantêm padding */
+            .video-controls-container > .my-2.w-full.horizontal-sliders-container,
             .video-controls-container > .my-3.flex.flex-wrap.justify-center {
                 padding-left: 0.5rem;
                 padding-right: 0.5rem;
@@ -125,9 +130,10 @@
         }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         
-        .maximized .video-outer-container { width: 100% !important; }
-        .maximized .video-container { width: 100% !important; }
-        .hidden-video-outer { display: none !important; }
+        .maximized .player-unit { width: 100% !important; } /* Ajustado para maximizar a unidade player+volume */
+        .maximized .video-outer-container { width: auto !important; flex-grow: 1 !important; }
+        .hidden-player-unit { display: none !important; }
+
 
         .player-overlay-buttons {
             position: absolute;
@@ -165,10 +171,17 @@
 
         /* Estilo dos Sliders (Velocidade e Sincronia) */
         .horizontal-sliders-container {
-            max-width: calc(100% - 5rem); /* Ajustado para nova largura dos volumes */
+            width: 100%; /* Ocupa a largura do pai, que terá padding se necessário */
+            max-width: 20rem; /* Limita a largura dos sliders horizontais */
             margin-left: auto;
             margin-right: auto;
         }
+         @media (min-width: 768px) {
+             .horizontal-sliders-container {
+                 max-width: 24rem; /* Um pouco maior em desktop */
+             }
+         }
+
         input[type="range"].styled-slider { 
             -webkit-appearance: none; 
             appearance: none; 
@@ -203,7 +216,7 @@
             padding: 0 3px; 
             background: #4B5563; 
             border-radius: 0.25rem;
-            /* A altura será definida pelas classes Tailwind no HTML */
+            height: 100%; /* Ocupa a altura do .volume-slider-container que é esticado */
         }
         input[type="range"].volume-slider-vertical::-webkit-slider-runnable-track { 
             background: transparent; 
@@ -239,8 +252,8 @@
         }
         
         #map-container { 
-            width: 196px; 
-            height: 147px; 
+            width: 187px; 
+            height: 140px; 
             position: fixed; bottom: 20px; right: 20px; z-index: 999; border: 2px solid #4b5563; border-radius: 8px; overflow: hidden; cursor: grab; transition: width 0.3s ease, height 0.3s ease, bottom 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
         }
         #map-container.maximized { width: 95vw; height: 85vh; top: 50%; left: 50%; transform: translate(-50%, -50%); cursor: default; bottom: auto !important; z-index: 1005; }
@@ -356,10 +369,10 @@
         #top-center-chinese-text {
             position: fixed;
             top: 10px; 
-            left: 90px; /* Espaço para o botão 70x07 */
-            right: 90px; /* Espaço para o botão Upgrade */
+            left: 75px; /* Espaço para o botão 70x07 e um pouco de margem */
+            right: 75px; /* Espaço para o botão Upgrade e um pouco de margem */
             z-index: 1005;
-            padding: 0.5rem 0.1rem; /* Reduzido padding horizontal */
+            padding: 0.5rem 0.25rem; 
             background-color: rgba(31, 41, 55, 0.7); 
             border-radius: 0.375rem;
             font-size: 1rem; 
@@ -367,7 +380,7 @@
             color: #e5e7eb; 
             letter-spacing: 0.05em;
             box-sizing: border-box;
-            white-space: nowrap; /* Para tentar evitar quebra de linha, mas pode ser ajustado */
+            /* white-space: nowrap; Removido para permitir quebra de linha */
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -392,12 +405,12 @@
             <div class="my-2 w-full horizontal-sliders-container"> 
                 <input type="range" id="speed-slider" min="0.07" max="3" step="0.01" value="1" class="styled-slider w-full" title="Ajustar velocidade" aria-label="Ajustar velocidade">
             </div>
-            <div class="flex w-full relative items-stretch video-row-wrapper"> 
-                <div class="volume-slider-container">
-                    <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-[calc(50vw*9/16*0.7)] md:h-[calc(512px*9/16*0.7)]" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
-                </div>
-                <div id="player-wrapper" class="flex flex-grow">
-                    <div id="video-outer-container-1" class="video-outer-container">
+            
+            <div id="player-wrapper" class="flex flex-wrap"> <div class="player-unit w-full md:w-1/2 flex p-1">
+                    <div class="volume-slider-container">
+                        <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-full" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
+                    </div>
+                    <div id="video-outer-container-1" class="video-outer-container flex-grow">
                         <div id="video-container-1" class="video-container">
                             <div id="player1"></div>
                             <div class="player-overlay-buttons">
@@ -405,7 +418,13 @@
                             </div>
                         </div>
                     </div>
-                    <div id="video-outer-container-2" class="video-outer-container">
+                </div>
+
+                <div class="player-unit w-full md:w-1/2 flex p-1">
+                    <div class="volume-slider-container">
+                        <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-full" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
+                    </div>
+                    <div id="video-outer-container-2" class="video-outer-container flex-grow">
                         <div id="video-container-2" class="video-container">
                             <div id="player2"></div>
                             <div class="player-overlay-buttons">
@@ -414,10 +433,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="volume-slider-container">
-                     <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-[calc(50vw*9/16*0.7)] md:h-[calc(512px*9/16*0.7)]" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
-                </div>
             </div>
+
             <div class="my-2 w-full horizontal-sliders-container"> 
                 <input type="range" id="sync-slider" min="-3" max="3" step="0.1" value="0" class="styled-slider w-full" title="Ajustar sincronia" aria-label="Ajustar sincronia">
             </div>
@@ -1064,4 +1081,3 @@
     </script>
 </body>
 </html>
-
