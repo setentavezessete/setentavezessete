@@ -84,11 +84,10 @@
         @media (max-width: 767px) { /* Empilhado em mobile */
              #player-wrapper {
                 flex-direction: column;
-                align-items: center; /* Centraliza os vídeos na coluna */
+                align-items: center; 
             }
             .video-outer-container {
-                width: 100%; /* Ocupa largura total na coluna */
-                /* max-width: 500px; Removido para permitir que o vídeo use mais espaço se disponível */
+                width: 100%; /* Ocupa largura total do #player-wrapper */
             }
         }
 
@@ -215,8 +214,8 @@
         }
         
         #map-container { 
-            width: 170px; /* 162px * ~1.0488 (sqrt(1.10)) */
-            height: 127px; /* 121px * ~1.0488 (sqrt(1.10)) */
+            width: 178px; /* 170px * sqrt(1.10) */
+            height: 133px; /* 127px * sqrt(1.10) */
             position: fixed; bottom: 20px; right: 20px; z-index: 999; border: 2px solid #4b5563; border-radius: 8px; overflow: hidden; cursor: grab; transition: width 0.3s ease, height 0.3s ease, bottom 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
         }
         #map-container.maximized { width: 95vw; height: 85vh; top: 50%; left: 50%; transform: translate(-50%, -50%); cursor: default; bottom: auto !important; z-index: 1005; }
