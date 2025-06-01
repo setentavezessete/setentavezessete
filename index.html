@@ -33,13 +33,13 @@
             flex-grow: 1; 
             overflow-y: auto; 
             padding: 0.5rem; 
-            padding-top: 70px; /* Aumentado para o texto chinês e botões superiores */
+            padding-top: 70px; 
             padding-bottom: 230px; 
         }
         @media (min-width: 768px) { 
             .main-content-area {
                 padding: 1rem; 
-                padding-top: 80px; /* Aumentado para o texto chinês e botões superiores */
+                padding-top: 80px;
                 padding-bottom: 230px; 
             }
         }
@@ -70,9 +70,28 @@
         }
         
         .video-outer-container { 
-            width: 50%;
+            width: 100%; 
             position: relative; 
         }
+        @media (min-width: 768px) { 
+            .video-outer-container {
+                width: 50%;
+            }
+            #player-wrapper {
+                 flex-direction: row;
+            }
+        }
+        @media (max-width: 767px) { 
+             #player-wrapper {
+                flex-direction: column;
+                align-items: center;
+            }
+            .video-outer-container {
+                width: 100%; 
+                max-width: 500px; 
+            }
+        }
+
         .video-container { 
             width: 100%; 
             aspect-ratio: 16/9; 
@@ -121,12 +140,9 @@
             font-size: 1em; 
         }
 
-        /* Estilo dos Sliders (Velocidade e Sincronia) - Tema Escuro/Branco */
+        /* Estilo dos Sliders (Velocidade e Sincronia) */
         .horizontal-sliders-container {
-            /* A largura será controlada pela altura dos sliders de volume */
-            /* Exemplo: se os sliders de volume têm 10rem de altura, este container pode ter max-width: 20rem (10rem * 2) */
-            /* Isso será ajustado dinamicamente ou com classes responsivas se necessário */
-            max-width: 24rem; /* sm:max-w-xs, md:max-w-sm */
+            max-width: calc(100% - 7rem); 
             margin-left: auto;
             margin-right: auto;
         }
@@ -138,72 +154,86 @@
             width: 100%; 
             height: 1.5rem; 
         }
-        input[type="range"].styled-slider::-webkit-slider-runnable-track { background: #374151; height: 0.3rem; border-radius: 0.15rem; }
-        input[type="range"].styled-slider::-moz-range-track { background: #374151; height: 0.3rem; border-radius: 0.15rem; }
-        input[type="range"].styled-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; margin-top: -0.4rem; background-color: #e5e7eb; height: 1.1rem; width: 1.1rem; border-radius: 50%; border: 1px solid #4b5563; }
-        input[type="range"].styled-slider::-moz-range-thumb { background-color: #e5e7eb; height: 1.1rem; width: 1.1rem; border-radius: 50%; border: 1px solid #4b5563; }
+        input[type="range"].styled-slider::-webkit-slider-runnable-track { background: #4B5563; height: 0.3rem; border-radius: 0.15rem; }
+        input[type="range"].styled-slider::-moz-range-track { background: #4B5563; height: 0.3rem; border-radius: 0.15rem; }
+        input[type="range"].styled-slider::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            appearance: none; 
+            margin-top: -0.4rem; 
+            background-color: #f59e0b; /* Laranja */
+            height: 1.1rem; width: 1.1rem; 
+            border-radius: 50%; 
+            border: 1px solid #e5e7eb; 
+        }
+        input[type="range"].styled-slider::-moz-range-thumb { 
+            background-color: #f59e0b; /* Laranja */
+            height: 1.1rem; width: 1.1rem; 
+            border-radius: 50%; 
+            border: 1px solid #e5e7eb; 
+        }
 
-        /* Sliders de Volume - Thumb Azul, track cinza */
+        /* Sliders de Volume - Thumb Azul Royal, track cinza */
         input[type="range"].volume-slider-vertical { 
             writing-mode: bt-lr; 
             -webkit-appearance: slider-vertical; 
-            width: 1.25rem; /* Ligeiramente mais fino */
+            width: 1.25rem; 
             padding: 0 3px; 
-            background: #374151; 
+            background: #4B5563; 
             border-radius: 0.25rem;
-            /* A altura será definida pelas classes Tailwind no HTML e deve ser menor que a altura do vídeo */
         }
         input[type="range"].volume-slider-vertical::-webkit-slider-runnable-track { 
             background: transparent; 
-            width: 0.25rem; /* Mais fino */
+            width: 0.25rem; 
             height: 100%; 
             border-radius: 0.125rem;
         }
         input[type="range"].volume-slider-vertical::-moz-range-track { 
             background: transparent; 
-            width: 0.25rem; /* Mais fino */
+            width: 0.25rem; 
             height: 100%; 
             border-radius: 0.125rem;
         }
         input[type="range"].volume-slider-vertical::-webkit-slider-thumb { 
             -webkit-appearance: none; 
             appearance: none; 
-            margin-left: -0.5rem; /* Ajustado para novo width do track */
-            background-color: #3b82f6; /* Azul */
+            margin-left: -0.5rem; 
+            background-color: #0054A6; /* Azul Royal */
             height: 1.25rem; width: 1.25rem; 
             border-radius: 50%; 
-            border: 2px solid #e5e7eb; 
+            border: 1px solid rgba(255,255,255,0.3); 
             cursor: pointer;
         }
         input[type="range"].volume-slider-vertical::-moz-range-thumb { 
-            background-color: #3b82f6; /* Azul */
+            background-color: #0054A6; /* Azul Royal */
             height: 1.25rem; width: 1.25rem; 
             border-radius: 50%; 
-            border: 2px solid #e5e7eb; 
+            border: 1px solid rgba(255,255,255,0.3); 
             cursor: pointer;
         }
-        /* Efeito de preenchimento para Webkit */
-        input[type="range"].volume-slider-vertical.blue-fill {
-             /* Para o efeito de preenchimento azul abaixo do thumb */
-            background: linear-gradient(to top, #3b82f6 var(--value-percent, 50%), #374151 var(--value-percent, 50%));
+        input[type="range"].volume-slider-vertical.royal-blue-fill {
+            background: linear-gradient(to top, #0054A6 var(--value-percent, 50%), #4B5563 var(--value-percent, 50%));
         }
         
-        #map-container { width: 280px; height: 210px; position: fixed; bottom: 20px; right: 20px; z-index: 999; border: 2px solid #4b5563; border-radius: 8px; overflow: hidden; cursor: grab; transition: width 0.3s ease, height 0.3s ease, bottom 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        #map-container { 
+            width: 162px; /* 128px * 1.35 */
+            height: 121px; /* 96px * 1.35 */
+            position: fixed; bottom: 20px; right: 20px; z-index: 999; border: 2px solid #4b5563; border-radius: 8px; overflow: hidden; cursor: grab; transition: width 0.3s ease, height 0.3s ease, bottom 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+        }
         #map-container.maximized { width: 95vw; height: 85vh; top: 50%; left: 50%; transform: translate(-50%, -50%); cursor: default; bottom: auto !important; z-index: 1005; }
         #map-pip { width: 100%; height: 100%; }
         .leaflet-control-zoom { display: none !important; } 
         #map-gps-button {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 5px; 
+            left: 5px;
             z-index: 1000; 
             background-color: rgba(255,255,255,0.8);
             color: #333;
             border: 1px solid #ccc;
             border-radius: 4px;
-            padding: 5px;
+            padding: 3px 5px; 
             cursor: pointer;
-            font-size: 1.2em;
+            font-size: 1em; 
         }
         #map-gps-button:hover { background-color: #f4f4f4; }
 
@@ -211,18 +241,18 @@
         .payment-button { transition: transform 0.1s ease-in-out; }
         .payment-button:active { transform: scale(0.95); }
         
-        /* Botões de Controle do Player - Tema Escuro/Branco */
+        /* Botões de Controle do Player - Azul Royal */
         .control-button { 
-            background-color: #1f2937; 
+            background-color: #0054A6; 
             color: #e5e7eb; 
-            border: 1px solid #4b5563; 
+            border: 1px solid #004182; 
             padding: 0.5rem 0.75rem;
             border-radius: 0.375rem; 
             transition: background-color 0.2s, color 0.2s; 
             font-size: 1.25rem; 
         }
         .control-button:hover { 
-            background-color: #374151; 
+            background-color: #004182; 
             color: white;
         }
         .control-button:disabled { 
@@ -251,6 +281,13 @@
         }
         #payment-section.upgrade-mode {
             z-index: 2001; 
+        }
+        #payment-title.upgrade-title { 
+            background-image: linear-gradient(to right, #f59e0b, #fbbf24); 
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: bold;
         }
 
 
@@ -299,15 +336,14 @@
             transform: translateX(-50%);
             z-index: 1005;
             padding: 0.5rem 1rem;
-            background-color: rgba(31, 41, 55, 0.7); /* bg-gray-800 com alpha */
+            background-color: rgba(31, 41, 55, 0.7); 
             border-radius: 0.375rem;
-            font-size: 0.9rem; /* Aumentado um pouco */
+            font-size: 1rem; 
             text-align: center;
             max-width: 90%;
-            color: #d1d5db; /* text-gray-300 - para ser discreto */
+            color: #e5e7eb; 
+            letter-spacing: 0.05em;
         }
-
-
         #pix-payment-brick-container { margin-top: 0.75rem; }
     </style>
 </head>
@@ -324,7 +360,6 @@
         在这里，即使是没有时间的文盲也可以在玩乐的同时学习多达两种语言。
     </div>
 
-
     <div class="w-full max-w-5xl mx-auto mt-4 main-content-area no-scrollbar"> 
         <div class="video-controls-container">
             <div class="my-2 w-full horizontal-sliders-container"> 
@@ -332,7 +367,7 @@
             </div>
             <div class="flex w-full relative items-stretch video-row-wrapper"> 
                 <div class="volume-slider-container">
-                    <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical blue-fill h-32 sm:h-40 md:h-48 lg:h-56" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
+                    <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-32 sm:h-36 md:h-40 lg:h-48" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
                 </div>
                 <div id="player-wrapper" class="flex flex-grow">
                     <div id="video-outer-container-1" class="video-outer-container">
@@ -353,7 +388,7 @@
                     </div>
                 </div>
                 <div class="volume-slider-container">
-                     <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical blue-fill h-32 sm:h-40 md:h-48 lg:h-56" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
+                     <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-32 sm:h-36 md:h-40 lg:h-48" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
                 </div>
             </div>
             <div class="my-2 w-full horizontal-sliders-container"> 
@@ -382,11 +417,11 @@
         <div class="flex items-center mb-3">
             <input type="text" id="contribution-amount" placeholder="Ex: 10.00" class="flex-grow p-2 rounded bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none">
         </div>
-        <div id="payment-buttons-container" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <button id="google-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://developers.google.com/static/pay/images/GPay.svg" alt="Google Pay" class="h-6 mr-2" onerror="this.style.display='none'"> Pagar</button>
-            <button id="apple-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://applepay.cdn-apple.com/static/img/logo/applepay_logo_rgb_dark.svg" alt="Apple Pay" class="h-8" onerror="this.style.display='none'"> </button>
-            <button id="pix-button" class="payment-button bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://img.icons8.com/ios-filled/50/ffffff/pix.png" alt="PIX" class="h-6 mr-2" onerror="this.src='https://placehold.co/24x24/000000/FFFFFF?text=PIX'; this.classList.remove('h-6'); this.classList.add('h-5', 'w-5');">PIX</button>
+        <div id="payment-buttons-container" class="flex flex-wrap gap-2 mb-2">
+             <button id="apple-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded flex items-center justify-center" style="width: calc(48% - 0.25rem);"><img src="https://applepay.cdn-apple.com/static/img/logo/applepay_logo_rgb_dark.svg" alt="Apple Pay" class="h-8" onerror="this.style.display='none'"> </button>
+             <button id="google-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded flex items-center justify-center" style="width: calc(48% - 0.25rem);"><img src="https://developers.google.com/static/pay/images/GPay.svg" alt="Google Pay" class="h-6 mr-2" onerror="this.style.display='none'"> Pagar</button>
         </div>
+        <button id="pix-button" class="payment-button bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://img.icons8.com/ios-filled/50/ffffff/pix.png" alt="PIX" class="h-6 mr-2" onerror="this.src='https://placehold.co/24x24/000000/FFFFFF?text=PIX'; this.classList.remove('h-6'); this.classList.add('h-5', 'w-5');">PIX</button>
         <div id="pix-payment-brick-container" class="my-3"></div>
         <p id="payment-footer-text" class="text-xs text-gray-500 mt-2 text-center">Pagamentos processados por Stripe e Mercado Pago (Modo Teste).</p>
         <div id="user-message-area" class="text-center text-sm mt-2 text-green-400"></div> 
@@ -438,7 +473,7 @@
         let youtubeApiReady = false; 
         let playersReadyState = { p1: false, p2: false }; 
 
-        // --- ELEMENTOS DOM (Definidos no window.onload) ---
+        // --- ELEMENTOS DOM (Declaração Global) ---
         let speedSliderElem, speedValueDisplayElem, syncSliderElem, 
             volumeSlider1Elem, volumeSlider2Elem, playPauseButtonElem, playPauseIconElem,
             videoOuterContainer1Elem, videoOuterContainer2Elem, videoContainer1Elem, videoContainer2Elem,
@@ -447,6 +482,42 @@
             googlePayButtonElem, applePayButtonElem, pixButtonElem, pixPaymentBrickContainerElem,
             userMessageAreaElem, topLeftChannelIconElem, topRightUpgradeButtonElem, siteOverlayElem,
             paymentTitleElem, paymentFooterTextElem, mapGpsButtonElem;
+        
+        function initializeDOMElements() {
+            speedSliderElem = document.getElementById('speed-slider');
+            // speedValueDisplayElem = document.getElementById('speed-value'); // Removido
+            syncSliderElem = document.getElementById('sync-slider');   
+            volumeSlider1Elem = document.getElementById('volume-slider-1'); 
+            volumeSlider2Elem = document.getElementById('volume-slider-2'); 
+            playPauseButtonElem = document.getElementById('play-pause-button');
+            playPauseIconElem = playPauseButtonElem.querySelector('i');
+            
+            videoOuterContainer1Elem = document.getElementById('video-outer-container-1');
+            videoOuterContainer2Elem = document.getElementById('video-outer-container-2');
+            videoContainer1Elem = document.getElementById('video-container-1'); 
+            videoContainer2Elem = document.getElementById('video-container-2'); 
+
+            shortsBtn1Elem = document.getElementById('shorts-btn-1');
+            shortsBtn2Elem = document.getElementById('shorts-btn-2');
+
+            mapContainerElem = document.getElementById('map-container');
+            mapElementElem = document.getElementById('map-pip');
+            mapGpsButtonElem = document.getElementById('map-gps-button'); 
+
+            paymentSectionElem = document.getElementById('payment-section'); 
+            contributionAmountInputElem = document.getElementById('contribution-amount');
+            googlePayButtonElem = document.getElementById('google-pay-button');
+            applePayButtonElem = document.getElementById('apple-pay-button');
+            pixButtonElem = document.getElementById('pix-button');
+            pixPaymentBrickContainerElem = document.getElementById('pix-payment-brick-container');
+            userMessageAreaElem = document.getElementById('user-message-area');
+            topLeftChannelIconElem = document.getElementById('top-left-channel-icon');
+            topRightUpgradeButtonElem = document.getElementById('top-right-upgrade-button');
+            siteOverlayElem = document.getElementById('site-overlay');
+            paymentTitleElem = document.getElementById('payment-title');
+            paymentFooterTextElem = document.getElementById('payment-footer-text');
+            console.log("DEBUG: initializeDOMElements concluído.");
+        }
         
         // --- Funções de Display ---
         function displayUserMessage(message, isPermanent = false, type = "info", duration = 3000) {
@@ -470,22 +541,30 @@
 
         // --- API DO YOUTUBE PLAYER ---
         function onYouTubeIframeAPIReady() {
-            console.log("DEBUG: onYouTubeIframeAPIReady chamada e API pronta.");
+            console.log("DEBUG: onYouTubeIframeAPIReady chamada.");
             youtubeApiReady = true;
-            if (document.readyState === 'complete' || document.readyState === 'interactive') {
-                 loadInitialVideoPair();
+            if (speedSliderElem) { 
+                console.log("DEBUG: onYouTubeIframeAPIReady - Elementos DOM já inicializados. Chamando loadInitialVideoPair.");
+                loadInitialVideoPair();
+            } else {
+                console.log("DEBUG: onYouTubeIframeAPIReady - Elementos DOM ainda NÃO inicializados. Aguardando window.onload.");
             }
         }
 
         async function loadInitialVideoPair() { 
             if (!youtubeApiReady) {
-                console.warn("DEBUG: API do YouTube ainda não pronta. loadInitialVideoPair aguardando...");
+                console.warn("DEBUG: loadInitialVideoPair chamado, mas API do YouTube ainda não pronta. Aguardando...");
                 if(document.readyState === 'complete' || document.readyState === 'interactive') {
                     setTimeout(loadInitialVideoPair, 300);
                 }
                 return;
             }
-            console.log("DEBUG: loadInitialVideoPair iniciado.");
+             if (!speedSliderElem) { 
+                console.warn("DEBUG: loadInitialVideoPair chamado, mas elementos DOM não estão prontos. Aguardando window.onload.");
+                return;
+            }
+            console.log("DEBUG: loadInitialVideoPair: API e DOM prontos. Iniciando carregamento.");
+
             displayUserMessage("A carregar dados dos canais...", true, "info");
             await loadAllChannelData(); 
             displayUserMessage("Dados dos canais processados.", false, "success", 1500);
@@ -501,8 +580,10 @@
         
         function handlePlayerError(playerErrored, event) { 
             const playerNumber = playerErrored === player1 ? 1 : 2;
-            console.error(`DEBUG: Erro no Player ${playerNumber}. Código: ${event.data}. Vídeo ID: ${playerNumber === 1 ? videoData1.id : videoData2.id}`);
-            displayUserMessage(`Erro ao carregar vídeo P${playerNumber}.`, false, "error", 3000);
+            const videoIdOnError = playerNumber === 1 ? videoData1.id : videoData2.id;
+            console.error(`DEBUG: Erro no Player ${playerNumber}. Código: ${event.data}. Vídeo ID: ${videoIdOnError}`);
+            displayUserMessage(`Erro vídeo P${playerNumber} (ID: ${videoIdOnError || 'N/A'}). Tentando alternativa.`, false, "error", 4000);
+
 
             if (playerNumber === 1) {
                 playersReadyState.p1 = false;
@@ -512,18 +593,17 @@
                     const targetChannel = channelData.find(ch => ch.id === videoData1.channelId);
                     const targetPlaylist = targetChannel?.playlists[videoData1.playlistIndex];
                     if (targetPlaylist && targetPlaylist.videos[nextVideoIndex]) {
-                        console.log(`DEBUG: Tentando próximo vídeo para P1 na mesma playlist. Próximo índice: ${nextVideoIndex}`);
-                        displayUserMessage(`Tentando vídeo seguinte para P1...`, false, "info", 2000);
                         videoData1.id = targetPlaylist.videos[nextVideoIndex].id;
                         videoData1.videoIndexInPlaylist = nextVideoIndex;
+                        console.log(`DEBUG P1 Error: Tentando próximo vídeo (${videoData1.id}) na mesma playlist.`);
                         if (player1 && typeof player1.loadVideoById === 'function') player1.loadVideoById(videoData1.id); else createPlayers(videoData1.id, videoData2.id);
                     } else {
-                        console.log(`DEBUG: Fim da playlist ou playlist/canal não encontrado para P1. Player ${playerNumber} não carregará novo vídeo.`);
-                        displayUserMessage(`P1: Fim da playlist ou erro.`, false, "warn", 3000);
+                        console.log(`DEBUG P1 Error: Fim da playlist ou erro. Próximo par de vídeos.`);
+                        setTimeout(() => navigateVideoPair(1), 500); 
                     }
                 } else {
-                     console.log(`DEBUG: Máximo de tentativas de recarregamento atingido para P1.`);
-                     displayUserMessage(`P1: Falha ao carregar vídeo.`, false, "error", 3000);
+                     console.log(`DEBUG P1 Error: Máximo de tentativas. Próximo par de vídeos.`);
+                     setTimeout(() => navigateVideoPair(1), 500);
                 }
             } else { // Player 2
                 playersReadyState.p2 = false;
@@ -533,43 +613,41 @@
                     const targetChannel = channelData.find(ch => ch.id === videoData2.channelId);
                     const targetPlaylist = targetChannel?.playlists[videoData2.playlistIndex];
                      if (targetPlaylist && targetPlaylist.videos[nextVideoIndex]) {
-                        console.log(`DEBUG: Tentando próximo vídeo para P2 na mesma playlist. Próximo índice: ${nextVideoIndex}`);
-                        displayUserMessage(`Tentando vídeo seguinte para P2...`, false, "info", 2000);
                         videoData2.id = targetPlaylist.videos[nextVideoIndex].id;
                         videoData2.videoIndexInPlaylist = nextVideoIndex;
+                        console.log(`DEBUG P2 Error: Tentando próximo vídeo (${videoData2.id}) na mesma playlist.`);
                         if (player2 && typeof player2.loadVideoById === 'function') player2.loadVideoById(videoData2.id); else createPlayers(videoData1.id, videoData2.id);
                     } else {
-                        console.log(`DEBUG: Fim da playlist ou playlist/canal não encontrado para P2. Player ${playerNumber} não carregará novo vídeo.`);
-                        displayUserMessage(`P2: Fim da playlist ou erro.`, false, "warn", 3000);
+                        console.log(`DEBUG P2 Error: Fim da playlist ou erro. Próximo par de vídeos.`);
+                         setTimeout(() => navigateVideoPair(1), 500);
                     }
                 } else {
-                    console.log(`DEBUG: Máximo de tentativas de recarregamento atingido para P2.`);
-                    displayUserMessage(`P2: Falha ao carregar vídeo.`, false, "error", 3000);
+                    console.log(`DEBUG P2 Error: Máximo de tentativas. Próximo par de vídeos.`);
+                    setTimeout(() => navigateVideoPair(1), 500);
                 }
             }
         }
 
-
         function createPlayers(vId1, vId2) {
-            console.log(`DEBUG: createPlayers - IDs: ${vId1}, ${vId2}`);
+            console.log(`DEBUG: createPlayers - IDs: ${vId1 || 'N/A'}, ${vId2 || 'N/A'}`);
             playersReadyState = { p1: false, p2: false }; 
             if (!youtubeApiReady || typeof YT === 'undefined' || typeof YT.Player === 'undefined') { 
                 console.error("ERRO em createPlayers: API do YouTube não pronta ou YT.Player não definido."); 
                 displayUserMessage("API do YouTube não está pronta. Tente recarregar.", true, "error");
                 return; 
             }
+            if (!vId1 || !vId2) {
+                console.error("ERRO em createPlayers: Um ou ambos os IDs de vídeo são nulos/inválidos.", `vId1: ${vId1}`, `vId2: ${vId2}`);
+                displayUserMessage("Erro: IDs de vídeo inválidos para carregar.", true, "error");
+                setTimeout(() => loadVideoPairByCurrentIndices(true), 1000); 
+                return;
+            }
+
             try {
                 const playerConfig = { 
-                    'autoplay': 0, 
-                    'controls': 0, 
-                    'loop': 0, 
-                    'mute': 0, 
-                    'origin': window.location.origin, 
-                    'playsinline': 1,
-                    'iv_load_policy': 3, 
-                    'rel': 0,
-                    'showinfo': 0, 
-                    'modestbranding': 1 
+                    'autoplay': 0, 'controls': 0, 'loop': 0, 'mute': 0, 
+                    'origin': window.location.origin, 'playsinline': 1,
+                    'iv_load_policy': 3, 'rel': 0, 'showinfo': 0, 'modestbranding': 1 
                 };
                 
                 if (player1 && typeof player1.destroy === 'function') player1.destroy();
@@ -579,8 +657,8 @@
                 player2 = new YT.Player('player2', { videoId: vId2, playerVars: playerConfig, events: { 'onReady': onPlayer2Ready, 'onStateChange': onPlayer2StateChange, 'onError': (e) => handlePlayerError(player2, e) }});
             } catch (error) { console.error("ERRO CRÍTICO ao instanciar YT.Player:", error); }
         }
-        function onPlayer1Ready(event) { console.log("DEBUG: Player 1 Pronto com vídeo:", videoData1.id); player1 = event.target; playersReadyState.p1 = true; currentVideoErrorCountP1 = 0; p1State = player1.getPlayerState(); if (player1.setVolume) player1.setVolume(parseInt(volumeSlider1Elem.value)); if (player1.setPlaybackRate) player1.setPlaybackRate(currentSpeed); updatePlayPauseIconStyle(); updateVolumeSliderFill(volumeSlider1Elem, volumeSlider1Elem.value); }
-        function onPlayer2Ready(event) { console.log("DEBUG: Player 2 Pronto com vídeo:", videoData2.id); player2 = event.target; playersReadyState.p2 = true; currentVideoErrorCountP2 = 0; p2State = player2.getPlayerState(); if (player2.setVolume) player2.setVolume(parseInt(volumeSlider2Elem.value)); if (player2.setPlaybackRate) player2.setPlaybackRate(currentSpeed); updatePlayPauseIconStyle(); updateVolumeSliderFill(volumeSlider2Elem, volumeSlider2Elem.value); }
+        function onPlayer1Ready(event) { console.log("DEBUG: Player 1 Pronto com vídeo:", videoData1.id); player1 = event.target; playersReadyState.p1 = true; currentVideoErrorCountP1 = 0; p1State = player1.getPlayerState(); if (player1.setVolume && volumeSlider1Elem) player1.setVolume(parseInt(volumeSlider1Elem.value)); if (player1.setPlaybackRate) player1.setPlaybackRate(currentSpeed); updatePlayPauseIconStyle(); if(volumeSlider1Elem) updateVolumeSliderFill(volumeSlider1Elem, volumeSlider1Elem.value); }
+        function onPlayer2Ready(event) { console.log("DEBUG: Player 2 Pronto com vídeo:", videoData2.id); player2 = event.target; playersReadyState.p2 = true; currentVideoErrorCountP2 = 0; p2State = player2.getPlayerState(); if (player2.setVolume && volumeSlider2Elem) player2.setVolume(parseInt(volumeSlider2Elem.value)); if (player2.setPlaybackRate) player2.setPlaybackRate(currentSpeed); updatePlayPauseIconStyle(); if(volumeSlider2Elem) updateVolumeSliderFill(volumeSlider2Elem, volumeSlider2Elem.value); }
         
         function updatePlayPauseIconStyle() { 
             if (!playPauseIconElem || typeof YT === 'undefined') return; 
@@ -599,7 +677,7 @@
         function onPlayer1StateChange(event) { p1State = event.data; console.log("DEBUG: P1 State:", playerStateToString(p1State)); handlePlayerStateChange(); } 
         function onPlayer2StateChange(event) { p2State = event.data; console.log("DEBUG: P2 State:", playerStateToString(p2State)); handlePlayerStateChange(); } 
         
-        function playerStateToString(state) { /* ... (código existente) ... */ switch(state) { case -1: return "UNSTARTED"; case 0: return "ENDED"; case 1: return "PLAYING"; case 2: return "PAUSED"; case 3: return "BUFFERING"; case 5: return "CUED"; default: return "UNKNOWN (" + state + ")"; }}
+        function playerStateToString(state) { switch(state) { case -1: return "UNSTARTED"; case 0: return "ENDED"; case 1: return "PLAYING"; case 2: return "PAUSED"; case 3: return "BUFFERING"; case 5: return "CUED"; default: return "UNKNOWN (" + state + ")"; }}
         
         function handlePlayerStateChange() { 
             if (!player1 || !player2 || typeof YT === 'undefined' || !playersReadyState.p1 || !playersReadyState.p2) return;
@@ -616,7 +694,6 @@
                 console.warn("DEBUG playVideosSynchronized: Players não completamente prontos ou funções ausentes."); 
                 return; 
             } 
-            console.log("DEBUG playVideosSynchronized. LoopRestart:", isLoopRestart); 
             
             if (typeof player1.pauseVideo === 'function') player1.pauseVideo(); 
             if (typeof player2.pauseVideo === 'function') player2.pauseVideo(); 
@@ -627,143 +704,69 @@
                 timeP2ToSeek = player2.getCurrentTime ? player2.getCurrentTime() : 0; 
             } 
             
-            if (syncOffset > 0) { 
-                timeP2ToSeek = timeP1ToSeek + syncOffset; 
-            } else if (syncOffset < 0) { 
-                timeP1ToSeek = timeP2ToSeek + Math.abs(syncOffset); 
-            } else {
-                 if (!isLoopRestart) timeP2ToSeek = timeP1ToSeek;
-            }
+            if (syncOffset > 0) { timeP2ToSeek = timeP1ToSeek + syncOffset; } 
+            else if (syncOffset < 0) { timeP1ToSeek = timeP2ToSeek + Math.abs(syncOffset); } 
+            else { if (!isLoopRestart) timeP2ToSeek = timeP1ToSeek; }
 
             if (timeP1ToSeek < 0) timeP1ToSeek = 0; 
             if (timeP2ToSeek < 0) timeP2ToSeek = 0; 
             
-            console.log(`DEBUG playVideosSynchronized: P1 seekTo ${timeP1ToSeek.toFixed(2)}, P2 seekTo ${timeP2ToSeek.toFixed(2)}`); 
             player1.seekTo(timeP1ToSeek, true); 
             player2.seekTo(timeP2ToSeek, true); 
             
             setTimeout(() => { 
-                console.log("DEBUG playVideosSynchronized: Chamando playVideo."); 
                 if (player1 && typeof player1.playVideo === 'function') player1.playVideo(); 
                 if (player2 && typeof player2.playVideo === 'function') player2.playVideo(); 
             }, 300); 
         }
         
-        async function fetchPlaylistsForChannel(channelId) { /* ... (código existente) ... */ 
+        async function fetchPlaylistsForChannel(channelId) { 
             const playlistsUrl = `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&channelId=${channelId}&maxResults=50&key=${YOUTUBE_API_KEY}`;
             try {
                 const response = await fetch(playlistsUrl);
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: { message: "Erro desconhecido"}}));
-                    console.error(`DEBUG fetchPlaylists: Erro ${response.status} para ${channelId}:`, errorData.error?.message); return [];
-                }
+                if (!response.ok) { const errorData = await response.json().catch(() => ({ error: { message: "Erro desconhecido"}})); console.error(`DEBUG fetchPlaylists: Erro ${response.status} para ${channelId}:`, errorData.error?.message); return []; }
                 const data = await response.json();
                 return data.items?.map(item => ({ id: item.id, title: item.snippet?.title, description: item.snippet?.description, videos: [] })) || [];
             } catch (error) { console.error(`DEBUG fetchPlaylists: Exceção para ${channelId}:`, error); return []; }
         }
-        async function fetchVideosForPlaylist(playlistId) { /* ... (código existente) ... */ 
+        async function fetchVideosForPlaylist(playlistId) { 
             const videosUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=50&key=${YOUTUBE_API_KEY}`;
             try {
                 const response = await fetch(videosUrl);
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: { message: "Erro desconhecido"}}));
-                    console.error(`DEBUG fetchVideos: Erro ${response.status} para ${playlistId}:`, errorData.error?.message); return [];
-                }
+                if (!response.ok) { const errorData = await response.json().catch(() => ({ error: { message: "Erro desconhecido"}})); console.error(`DEBUG fetchVideos: Erro ${response.status} para ${playlistId}:`, errorData.error?.message); return []; }
                 const data = await response.json();
                 return data.items?.filter(item => item.contentDetails?.videoId).map(item => ({ id: item.contentDetails.videoId, title: item.snippet?.title, description: item.snippet?.description })) || [];
             } catch (error) { console.error(`DEBUG fetchVideos: Exceção para ${playlistId}:`, error); return []; }
         }
-        async function loadAllChannelData() { /* ... (código existente) ... */ 
+        async function loadAllChannelData() { 
             channelData = []; 
             for (const channelId of INITIAL_CHANNEL_IDS) {
                 const playlists = await fetchPlaylistsForChannel(channelId);
                 if (playlists && playlists.length > 0) {
-                    for (let i = 0; i < playlists.length; i++) {
-                        playlists[i].videos = await fetchVideosForPlaylist(playlists[i].id);
-                    }
+                    for (let i = 0; i < playlists.length; i++) { playlists[i].videos = await fetchVideosForPlaylist(playlists[i].id); }
                     channelData.push({ id: channelId, playlists: playlists });
                 }
             }
         }
         
-        // --- Controlos ---
         function setupEventListeners() {
-            speedSliderElem = document.getElementById('speed-slider');
-            speedValueDisplayElem = document.getElementById('speed-value');
-            syncSliderElem = document.getElementById('sync-slider');   
-            volumeSlider1Elem = document.getElementById('volume-slider-1'); 
-            volumeSlider2Elem = document.getElementById('volume-slider-2'); 
-            playPauseButtonElem = document.getElementById('play-pause-button');
-            playPauseIconElem = playPauseButtonElem.querySelector('i');
-            
-            videoOuterContainer1Elem = document.getElementById('video-outer-container-1');
-            videoOuterContainer2Elem = document.getElementById('video-outer-container-2');
-            videoContainer1Elem = document.getElementById('video-container-1'); 
-            videoContainer2Elem = document.getElementById('video-container-2'); 
-
-            // subscribeBtn1Elem = document.getElementById('subscribe-btn-1'); // Removido
-            shortsBtn1Elem = document.getElementById('shorts-btn-1');
-            // subscribeBtn2Elem = document.getElementById('subscribe-btn-2'); // Removido
-            shortsBtn2Elem = document.getElementById('shorts-btn-2');
-
-            mapContainerElem = document.getElementById('map-container');
-            mapElementElem = document.getElementById('map-pip');
-            paymentSectionElem = document.getElementById('payment-section'); 
-            contributionAmountInputElem = document.getElementById('contribution-amount');
-            googlePayButtonElem = document.getElementById('google-pay-button');
-            applePayButtonElem = document.getElementById('apple-pay-button');
-            pixButtonElem = document.getElementById('pix-button');
-            pixPaymentBrickContainerElem = document.getElementById('pix-payment-brick-container');
-            userMessageAreaElem = document.getElementById('user-message-area');
-            topLeftChannelIconElem = document.getElementById('top-left-channel-icon');
-            topRightUpgradeButtonElem = document.getElementById('top-right-upgrade-button');
-            siteOverlayElem = document.getElementById('site-overlay');
-            paymentTitleElem = document.getElementById('payment-title');
-            mapGpsButtonElem = document.getElementById('map-gps-button'); 
-
+            if (!speedSliderElem) { console.error("ERRO FATAL: Elementos DOM não inicializados antes de setupEventListeners."); return; }
 
             speedSliderElem.addEventListener('input', (e) => { currentSpeed = parseFloat(e.target.value); /* Removido speedValueDisplayElem.textContent */ if (player1?.setPlaybackRate) player1.setPlaybackRate(currentSpeed); if (player2?.setPlaybackRate) player2.setPlaybackRate(currentSpeed);});
-            syncSliderElem.addEventListener('input', (e) => { 
-                syncOffset = parseFloat(e.target.value); 
-                applySyncOnSliderMove(); 
-            });
-            volumeSlider1Elem.addEventListener('input', (e) => { 
-                if (player1?.setVolume) player1.setVolume(parseInt(e.target.value)); 
-                updateVolumeSliderFill(volumeSlider1Elem, e.target.value);
-            });
-            volumeSlider2Elem.addEventListener('input', (e) => { 
-                if (player2?.setVolume) player2.setVolume(parseInt(e.target.value)); 
-                updateVolumeSliderFill(volumeSlider2Elem, e.target.value);
-            });
+            syncSliderElem.addEventListener('input', (e) => { syncOffset = parseFloat(e.target.value); applySyncOnSliderMove(); });
+            volumeSlider1Elem.addEventListener('input', (e) => { if (player1?.setVolume) player1.setVolume(parseInt(e.target.value)); updateVolumeSliderFill(volumeSlider1Elem, e.target.value); });
+            volumeSlider2Elem.addEventListener('input', (e) => { if (player2?.setVolume) player2.setVolume(parseInt(e.target.value)); updateVolumeSliderFill(volumeSlider2Elem, e.target.value); });
             
             playPauseButtonElem.addEventListener('click', () => {
-                console.log("DEBUG: Botão Play/Pause clicado.");
                 if (!youtubeApiReady || !playersReadyState.p1 || !playersReadyState.p2 || !player1 || !player2) {
-                    console.warn("Play/Pause: Players ou API não estão totalmente prontos.");
-                    if (youtubeApiReady && videoData1.id && videoData2.id && (!playersReadyState.p1 || !playersReadyState.p2)) {
-                        console.log("Tentando criar/recrear players no clique do play/pause.");
-                        createPlayers(videoData1.id, videoData2.id);
-                    }
+                    if (youtubeApiReady && videoData1.id && videoData2.id && (!playersReadyState.p1 || !playersReadyState.p2)) { createPlayers(videoData1.id, videoData2.id); }
                     return;
                 }
-
-                let currentP1State = player1.getPlayerState();
-                let currentP2State = player2.getPlayerState();
-                console.log(`DEBUG: Play/Pause - P1 atual: ${playerStateToString(currentP1State)}, P2 atual: ${playerStateToString(currentP2State)}`);
-
+                let currentP1State = player1.getPlayerState(); let currentP2State = player2.getPlayerState();
                 const p1IsPlaying = currentP1State === YT.PlayerState.PLAYING || currentP1State === YT.PlayerState.BUFFERING;
                 const p2IsPlaying = currentP2State === YT.PlayerState.PLAYING || currentP2State === YT.PlayerState.BUFFERING;
-
-                if (p1IsPlaying || p2IsPlaying) {
-                    console.log("DEBUG: Play/Pause -> Pausando vídeos.");
-                    if (player1.pauseVideo) player1.pauseVideo();
-                    if (player2.pauseVideo) player2.pauseVideo();
-                } else {
-                    console.log("DEBUG: Play/Pause -> Tocando vídeos.");
-                     playVideosSynchronized( (currentP1State === YT.PlayerState.ENDED && currentP2State === YT.PlayerState.ENDED) ||
-                                           (currentP1State === YT.PlayerState.UNSTARTED || currentP1State === YT.PlayerState.CUED) ||
-                                           (currentP2State === YT.PlayerState.UNSTARTED || currentP2State === YT.PlayerState.CUED) );
-                }
+                if (p1IsPlaying || p2IsPlaying) { if (player1.pauseVideo) player1.pauseVideo(); if (player2.pauseVideo) player2.pauseVideo(); } 
+                else { playVideosSynchronized( (currentP1State === YT.PlayerState.ENDED && currentP2State === YT.PlayerState.ENDED) || (currentP1State === YT.PlayerState.UNSTARTED || currentP1State === YT.PlayerState.CUED) || (currentP2State === YT.PlayerState.UNSTARTED || currentP2State === YT.PlayerState.CUED) ); }
             });
             
             document.getElementById('next-video-pair').addEventListener('click', () => navigateVideoPair(1));
@@ -777,30 +780,20 @@
                 let lastTapTime = 0; 
                 container.addEventListener('touchend', function(event) { 
                     const currentTime = new Date().getTime(); 
-                    if (currentTime - lastTapTime < 300) { 
-                        event.preventDefault(); 
-                        toggleMaximize(container.parentElement); 
-                    } 
+                    if (currentTime - lastTapTime < 300) { event.preventDefault(); toggleMaximize(container.parentElement); } 
                     lastTapTime = currentTime; 
                 }); 
                 container.addEventListener('dblclick', () => toggleMaximize(container.parentElement)); 
             });
             if (mapElementElem) mapElementElem.addEventListener('dblclick', toggleMapMaximize); 
-            if (mapGpsButtonElem) { 
-                 mapGpsButtonElem.addEventListener('click', () => {
-                    displayUserMessage("Funcionalidade GPS a ser implementada.", false, "info");
-                });
-            }
+            if (mapGpsButtonElem) { mapGpsButtonElem.addEventListener('click', () => { displayUserMessage("Funcionalidade GPS a ser implementada.", false, "info"); }); }
 
-            // subscribeBtn1Elem.addEventListener('click', () => openYouTubeSubscribe(videoData1.channelId)); // Removido
             shortsBtn1Elem.addEventListener('click', () => openYouTubeShorts(videoData1.id));
-            // subscribeBtn2Elem.addEventListener('click', () => openYouTubeSubscribe(videoData2.channelId)); // Removido
             shortsBtn2Elem.addEventListener('click', () => openYouTubeShorts(videoData2.id));
 
-            // Listeners de pagamento (simplificado)
-            googlePayButtonElem.addEventListener('click', () => displayUserMessage("Google Pay não implementado para simulação.", false, "warn", 4000));
-            applePayButtonElem.addEventListener('click', () => displayUserMessage("Apple Pay não implementado para simulação.", false, "warn", 4000));
-            pixButtonElem.addEventListener('click', () => displayUserMessage("PIX não implementado para simulação.", false, "warn", 4000));
+            googlePayButtonElem.addEventListener('click', () => displayUserMessage("Google Pay não implementado.", false, "warn", 4000));
+            applePayButtonElem.addEventListener('click', () => displayUserMessage("Apple Pay não implementado.", false, "warn", 4000));
+            pixButtonElem.addEventListener('click', () => displayUserMessage("PIX não implementado.", false, "warn", 4000));
 
             const paymentSectionForObserver = document.getElementById('payment-section');
             if (paymentSectionForObserver) {
@@ -812,7 +805,8 @@
                 siteOverlayElem.style.display = 'block';
                 paymentSectionElem.classList.add('upgrade-mode');
                 paymentTitleElem.innerHTML = "✨ Portuguese + English + Chinese ✨"; 
-                contributionAmountInputElem.value = "15,00"; 
+                paymentTitleElem.classList.add('upgrade-title'); 
+                contributionAmountInputElem.value = "15.00"; 
                 contributionAmountInputElem.readOnly = true;
             });
 
@@ -821,26 +815,24 @@
                      siteOverlayElem.style.display = 'none';
                      paymentSectionElem.classList.remove('upgrade-mode');
                      paymentTitleElem.textContent = "Faça uma Contribuição";
+                     paymentTitleElem.classList.remove('upgrade-title');
                      contributionAmountInputElem.value = "";
                      contributionAmountInputElem.placeholder = "Ex: 10.00";
                      contributionAmountInputElem.readOnly = false;
                 }
             });
-            topLeftChannelIconElem.addEventListener('click', () => {
-                window.location.reload();
-            });
+            topLeftChannelIconElem.addEventListener('click', () => { window.location.reload(); });
+            console.log("DEBUG: setupEventListeners concluído.");
         }
         
-        function applySyncOnSliderMove() { /* ... (código existente) ... */ if (!player1 || !player2 || typeof player1.getCurrentTime !== 'function' || typeof player2.seekTo !== 'function' || typeof player2.getCurrentTime !== 'function' || typeof player2.seekTo !== 'function' || !playersReadyState.p1 || !playersReadyState.p2) { return; } const wasPlaying = (p1State === YT.PlayerState.PLAYING || p2State === YT.PlayerState.PLAYING); if (wasPlaying) { if (player1?.pauseVideo) player1.pauseVideo(); if (player2?.pauseVideo) player2.pauseVideo(); } let p1TimeToSeek = player1.getCurrentTime(); let p2TimeToSeek = player2.getCurrentTime(); /* Corrigido para player2.getCurrentTime() */ if (syncOffset > 0) { p2TimeToSeek += syncOffset; } else if (syncOffset < 0) { p1TimeToSeek += Math.abs(syncOffset); } if (p1TimeToSeek < 0) p1TimeToSeek = 0; if (p2TimeToSeek < 0) p2TimeToSeek = 0; player1.seekTo(p1TimeToSeek, true); player2.seekTo(p2TimeToSeek, true); if (wasPlaying) { setTimeout(() => { if (player1?.playVideo) player1.playVideo(); if (player2?.playVideo) player2.playVideo(); }, 250); }}
+        function applySyncOnSliderMove() { if (!player1 || !player2 || typeof player1.getCurrentTime !== 'function' || typeof player2.seekTo !== 'function' || typeof player2.getCurrentTime !== 'function' || typeof player2.seekTo !== 'function' || !playersReadyState.p1 || !playersReadyState.p2) { return; } const wasPlaying = (p1State === YT.PlayerState.PLAYING || p2State === YT.PlayerState.PLAYING); if (wasPlaying) { if (player1?.pauseVideo) player1.pauseVideo(); if (player2?.pauseVideo) player2.pauseVideo(); } let p1TimeToSeek = player1.getCurrentTime(); let p2TimeToSeek = player2.getCurrentTime(); if (syncOffset > 0) { p2TimeToSeek += syncOffset; } else if (syncOffset < 0) { p1TimeToSeek += Math.abs(syncOffset); } if (p1TimeToSeek < 0) p1TimeToSeek = 0; if (p2TimeToSeek < 0) p2TimeToSeek = 0; player1.seekTo(p1TimeToSeek, true); player2.seekTo(p2TimeToSeek, true); if (wasPlaying) { setTimeout(() => { if (player1?.playVideo) player1.playVideo(); if (player2?.playVideo) player2.playVideo(); }, 250); }}
         
         function updateVolumeSliderFill(slider, value) {
+            if (!slider) return;
             const percentage = (parseInt(value) / parseInt(slider.max)) * 100;
             slider.style.setProperty('--value-percent', percentage + '%');
-            // A classe 'blue-fill' e o CSS associado tentam criar o efeito de preenchimento.
         }
 
-        // --- Funções de Navegação (adaptadas para atualizar videoDataX) ---
-        /* ... (código de navegação como antes, garantindo que videoData1 e videoData2 sejam atualizados) ... */
         function navigateVideoPair(direction) { if (channelData.length === 0) { displayUserMessage("A carregar dados...", true, "info"); return; } currentVideoErrorCountP1 = 0; currentVideoErrorCountP2 = 0; const ch1DataIdx = channelData.findIndex(ch => ch.id === INITIAL_CHANNEL_IDS[currentChannelPairIndex]); let ch2DataIdx = -1; if (INITIAL_CHANNEL_IDS.length > 1) { const nextChannelIdInInitialList = INITIAL_CHANNEL_IDS[(currentChannelPairIndex + 1) % INITIAL_CHANNEL_IDS.length]; ch2DataIdx = channelData.findIndex(ch => ch.id === nextChannelIdInInitialList); } if (ch1DataIdx === -1) { console.error("Canal 1 não encontrado em channelData"); return; } const channel1 = channelData[ch1DataIdx]; const channel2 = (ch2DataIdx !== -1 && channelData[ch2DataIdx]) ? channelData[ch2DataIdx] : channel1; const playlist1 = channel1.playlists[currentPlaylistPairIndices[0] % (channel1.playlists.length || 1)]; const playlist2 = channel2.playlists[currentPlaylistPairIndices[1] % (channel2.playlists.length || 1)]; if (playlist1 && playlist1.videos.length > 0) { currentVideoPairIndices[0] = (currentVideoPairIndices[0] + direction + playlist1.videos.length) % playlist1.videos.length; videoData1 = { id: playlist1.videos[currentVideoPairIndices[0]].id, channelId: channel1.id, playlistId: playlist1.id, playlistIndex: currentPlaylistPairIndices[0], videoIndexInPlaylist: currentVideoPairIndices[0] }; } if (playlist2 && playlist2.videos.length > 0) { currentVideoPairIndices[1] = (currentVideoPairIndices[1] + direction + playlist2.videos.length) % playlist2.videos.length; videoData2 = { id: playlist2.videos[currentVideoPairIndices[1]].id, channelId: channel2.id, playlistId: playlist2.id, playlistIndex: currentPlaylistPairIndices[1], videoIndexInPlaylist: currentVideoPairIndices[1] };} else if (playlist1 && playlist1.videos.length > 0) { currentVideoPairIndices[1] = currentVideoPairIndices[0]; videoData2 = { ...videoData1 };} loadVideoPairByCurrentIndices(); }
         function navigatePlaylistPair(direction) { if (channelData.length === 0) { displayUserMessage("A carregar dados...", true, "info"); return; } currentVideoErrorCountP1 = 0; currentVideoErrorCountP2 = 0; const ch1DataIdx = channelData.findIndex(ch => ch.id === INITIAL_CHANNEL_IDS[currentChannelPairIndex]); let ch2DataIdx = -1; if (INITIAL_CHANNEL_IDS.length > 1) { const nextChannelIdInInitialList = INITIAL_CHANNEL_IDS[(currentChannelPairIndex + 1) % INITIAL_CHANNEL_IDS.length]; ch2DataIdx = channelData.findIndex(ch => ch.id === nextChannelIdInInitialList); } if (ch1DataIdx === -1) { console.error("Canal 1 não encontrado em channelData"); return; } const channel1 = channelData[ch1DataIdx]; const channel2 = (ch2DataIdx !== -1 && channelData[ch2DataIdx]) ? channelData[ch2DataIdx] : channel1; if (channel1.playlists.length > 0) { currentPlaylistPairIndices[0] = (currentPlaylistPairIndices[0] + direction + channel1.playlists.length) % channel1.playlists.length; currentVideoPairIndices[0] = 0;  } if (channel2.playlists.length > 0) { currentPlaylistPairIndices[1] = (currentPlaylistPairIndices[1] + direction + channel2.playlists.length) % channel2.playlists.length; currentVideoPairIndices[1] = 0; } else if (channel1.playlists.length > 0) { currentPlaylistPairIndices[1] = currentPlaylistPairIndices[0]; currentVideoPairIndices[1] = 0;} loadVideoPairByCurrentIndices(); } 
         function navigateChannelPair(direction) { if (INITIAL_CHANNEL_IDS.length === 0) { displayUserMessage("Nenhum canal configurado.", false, "warn"); return; } if (INITIAL_CHANNEL_IDS.length < 2 && direction !== 0) { displayUserMessage("Apenas um par de canais configurado.", false, "warn"); return;} currentVideoErrorCountP1 = 0; currentVideoErrorCountP2 = 0; currentChannelPairIndex = (currentChannelPairIndex + direction * (INITIAL_CHANNEL_IDS.length > 1 ? 2 : 1) + INITIAL_CHANNEL_IDS.length) % INITIAL_CHANNEL_IDS.length; currentPlaylistPairIndices = [0, 0];  currentVideoPairIndices = [0, 0]; loadVideoPairByCurrentIndices(); } 
@@ -860,12 +852,11 @@
             const ch1DataIdx = channelData.findIndex(ch => ch.id === ch1IdFromInitial); 
             
             let ch2IndexInInitial = (currentChannelPairIndex + 1) % INITIAL_CHANNEL_IDS.length;
-            if (INITIAL_CHANNEL_IDS.length <= 1) ch2IndexInInitial = ch1IndexInInitial; // Se só 1 canal, P2 usa o mesmo.
+            if (INITIAL_CHANNEL_IDS.length <= 1) ch2IndexInInitial = ch1IndexInInitial;
             const ch2IdFromInitial = INITIAL_CHANNEL_IDS[ch2IndexInInitial];
             const ch2DataIdx = channelData.findIndex(ch => ch.id === ch2IdFromInitial); 
             
             if (ch1DataIdx === -1) { 
-                console.error("loadVideoPairByCurrentIndices: Canal principal (ID:", ch1IdFromInitial,") não encontrado. Usando fallback.");
                 videoData1 = { id: 'dQw4w9WgXcQ', channelId: 'UCXIJgqnII2ZOINSWNOGFThA', playlistId: 'fallback', playlistIndex:0, videoIndexInPlaylist:0 };
                 videoData2 = { id: 'rokGy0huYEA', channelId: 'UCGg_s_j93HqH0n3F4nIK3ZQ', playlistId: 'fallback', playlistIndex:0, videoIndexInPlaylist:0 };
                 createPlayers(videoData1.id, videoData2.id); 
@@ -880,38 +871,23 @@
             
             const playlist1Data = channel1.playlists[pl1Idx]; 
             const playlist2Data = (INITIAL_CHANNEL_IDS.length <= 1 && channel1.playlists.length > (pl1Idx + 1) ) 
-                                ? channel1.playlists[pl1Idx+1 % channel1.playlists.length] // Se só 1 canal, tenta playlist diferente para P2
+                                ? channel1.playlists[(pl1Idx+1) % channel1.playlists.length] 
                                 : channel2.playlists[pl2Idx]; 
             
             const vidIdx1 = currentVideoPairIndices[0] % (playlist1Data?.videos?.length || 1);
             const vid1Obj = playlist1Data?.videos[vidIdx1];
-            videoData1 = { 
-                id: vid1Obj?.id || 'dQw4w9WgXcQ', 
-                channelId: channel1.id,
-                playlistId: playlist1Data?.id || 'fallback',
-                playlistIndex: pl1Idx,
-                videoIndexInPlaylist: vidIdx1
-            };
+            videoData1 = { id: vid1Obj?.id || 'dQw4w9WgXcQ', channelId: channel1.id, playlistId: playlist1Data?.id || 'fallback', playlistIndex: pl1Idx, videoIndexInPlaylist: vidIdx1 };
 
             const vidIdx2 = (INITIAL_CHANNEL_IDS.length <= 1 && playlist1Data === playlist2Data && playlist1Data?.videos?.length > 1) 
-                            ? (vidIdx1 + 1) % playlist1Data.videos.length // Se P2 usa mesma playlist de P1, pega vídeo diferente
+                            ? (vidIdx1 + 1) % playlist1Data.videos.length 
                             : currentVideoPairIndices[1] % (playlist2Data?.videos?.length || 1);
             const vid2Obj = playlist2Data?.videos[vidIdx2];
-            videoData2 = { 
-                id: vid2Obj?.id || videoData1.id, // Fallback para videoData1.id se P2 não tiver vídeo
-                channelId: channel2.id,
-                playlistId: playlist2Data?.id || 'fallback',
-                playlistIndex: (INITIAL_CHANNEL_IDS.length <= 1 && channel1.playlists.length > (pl1Idx + 1)) ? (pl1Idx+1 % channel1.playlists.length) : pl2Idx,
-                videoIndexInPlaylist: vidIdx2
-            };
-
+            videoData2 = { id: vid2Obj?.id || videoData1.id, channelId: channel2.id, playlistId: playlist2Data?.id || 'fallback', playlistIndex: (INITIAL_CHANNEL_IDS.length <= 1 && channel1.playlists.length > (pl1Idx + 1)) ? ((pl1Idx+1) % channel1.playlists.length) : pl2Idx, videoIndexInPlaylist: vidIdx2 };
 
             if (videoData1.id && videoData2.id) { 
-                console.log(`loadVideoPairByCurrentIndices: Carregando P1=${videoData1.id} (Ch: ${videoData1.channelId}), P2=${videoData2.id} (Ch: ${videoData2.channelId})`); 
                 createPlayers(videoData1.id, videoData2.id); 
                 updateMapFromPlaylist(playlist1Data || { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" }); 
             } else { 
-                console.error("loadVideoPairByCurrentIndices: IDs de vídeo não encontrados. Usando fallback global.");
                 videoData1 = { id: 'dQw4w9WgXcQ', channelId: 'UCXIJgqnII2ZOINSWNOGFThA', playlistId: 'fallback', playlistIndex:0, videoIndexInPlaylist:0 };
                 videoData2 = { id: 'rokGy0huYEA', channelId: 'UCGg_s_j93HqH0n3F4nIK3ZQ', playlistId: 'fallback', playlistIndex:0, videoIndexInPlaylist:0 };
                 createPlayers(videoData1.id, videoData2.id); 
@@ -919,113 +895,106 @@
             }
         }
         
-        // --- Funções do Mapa (sem alteração da lógica principal, apenas CSS e posicionamento) ---
-        /* ... (código do mapa como antes) ... */
-        function initMap() { map = L.map(mapElementElem, { center: [-23.4334, -45.0719], zoom: 13, scrollWheelZoom: false, zoomControl: false /* Remove controles de zoom padrão */ }); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM contributors' }).addTo(map); makeMapDraggable(); if (mapElementElem) mapElementElem.addEventListener('dblclick', toggleMapMaximize); adjustMapPipPosition(); } 
-        function makeMapDraggable() { mapContainerElem.onmousedown = function(event) { if (isMapMaximized || !map) return; if (event.target.closest('.leaflet-control-container') || event.target.closest('.leaflet-map-pane') || event.target.closest('#map-gps-button')) { if(map && map.dragging && !map.dragging.enabled()) map.dragging.enable(); return; } if (map.dragging && map.dragging.enabled()) map.dragging.disable(); isMapDragging = true; mapContainerElem.style.cursor = 'grabbing'; mapDragOffset.x = event.clientX - mapContainerElem.offsetLeft; mapDragOffset.y = event.clientY - mapContainerElem.offsetTop; }; document.onmousemove = function(event) { if (!isMapDragging || isMapMaximized) return; let newX = event.clientX - mapDragOffset.x; let newY = event.clientY - mapDragOffset.y; const margin = 10; newX = Math.max(margin, Math.min(newX, window.innerWidth - mapContainerElem.offsetWidth - margin)); newY = Math.max(margin, Math.min(newY, window.innerHeight - mapContainerElem.offsetHeight - margin)); mapContainerElem.style.left = newX + 'px'; mapContainerElem.style.top = newY + 'px'; }; document.onmouseup = function() { if (isMapDragging && map && map.dragging && !isMapMaximized && !map.dragging.enabled()) { map.dragging.enable(); } isMapDragging = false; if (!isMapMaximized) mapContainerElem.style.cursor = 'grab'; }; }
+        function initMap() { 
+            if (!mapElementElem) { console.error("Elemento do mapa não encontrado para initMap."); return;}
+            map = L.map(mapElementElem, { center: [-23.4334, -45.0719], zoom: 13, scrollWheelZoom: false, zoomControl: false }); 
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM contributors' }).addTo(map); 
+            makeMapDraggable(); 
+            if (mapElementElem) mapElementElem.addEventListener('dblclick', toggleMapMaximize); 
+            adjustMapPipPosition(); 
+        } 
+        function makeMapDraggable() {
+            if (!mapContainerElem || !map) return;
+
+            let dragStartMouse = (event) => {
+                if (isMapMaximized || !map) return;
+                if (event.target.closest('.leaflet-control-container') || event.target.closest('.leaflet-map-pane') || event.target.closest('#map-gps-button')) {
+                    if(map.dragging && !map.dragging.enabled()) map.dragging.enable(); return;
+                }
+                if (map.dragging && map.dragging.enabled()) map.dragging.disable();
+                isMapDragging = true;
+                mapContainerElem.style.cursor = 'grabbing';
+                mapDragOffset.x = event.clientX - mapContainerElem.offsetLeft;
+                mapDragOffset.y = event.clientY - mapContainerElem.offsetTop;
+            };
+
+            let dragMoveMouse = (event) => {
+                if (!isMapDragging || isMapMaximized) return;
+                let newX = event.clientX - mapDragOffset.x;
+                let newY = event.clientY - mapDragOffset.y;
+                const margin = 10;
+                newX = Math.max(margin, Math.min(newX, window.innerWidth - mapContainerElem.offsetWidth - margin));
+                newY = Math.max(margin, Math.min(newY, window.innerHeight - mapContainerElem.offsetHeight - margin));
+                mapContainerElem.style.left = newX + 'px';
+                mapContainerElem.style.top = newY + 'px';
+            };
+
+            let dragEndMouse = () => {
+                if (isMapDragging && map && map.dragging && !isMapMaximized && !map.dragging.enabled()) { map.dragging.enable(); }
+                isMapDragging = false;
+                if (!isMapMaximized) mapContainerElem.style.cursor = 'grab';
+            };
+            
+            let dragStartTouch = (event) => {
+                if (isMapMaximized || !map || event.touches.length !== 1) return;
+                 if (event.target.closest('.leaflet-control-container') || event.target.closest('.leaflet-map-pane') || event.target.closest('#map-gps-button')) {
+                    if(map.dragging && !map.dragging.enabled()) map.dragging.enable(); return;
+                }
+                event.preventDefault(); 
+                if (map.dragging && map.dragging.enabled()) map.dragging.disable();
+                isMapDragging = true;
+                mapContainerElem.style.cursor = 'grabbing';
+                mapDragOffset.x = event.touches[0].clientX - mapContainerElem.offsetLeft;
+                mapDragOffset.y = event.touches[0].clientY - mapContainerElem.offsetTop;
+            };
+
+            let dragMoveTouch = (event) => {
+                if (!isMapDragging || isMapMaximized || event.touches.length !== 1) return;
+                event.preventDefault();
+                let newX = event.touches[0].clientX - mapDragOffset.x;
+                let newY = event.touches[0].clientY - mapDragOffset.y;
+                const margin = 10;
+                newX = Math.max(margin, Math.min(newX, window.innerWidth - mapContainerElem.offsetWidth - margin));
+                newY = Math.max(margin, Math.min(newY, window.innerHeight - mapContainerElem.offsetHeight - margin));
+                mapContainerElem.style.left = newX + 'px';
+                mapContainerElem.style.top = newY + 'px';
+            };
+            
+            mapContainerElem.onmousedown = dragStartMouse;
+            document.onmousemove = dragMoveMouse;
+            document.onmouseup = dragEndMouse;
+
+            mapContainerElem.ontouchstart = dragStartTouch;
+            mapContainerElem.ontouchmove = dragMoveTouch;
+            mapContainerElem.ontouchend = dragEndMouse; 
+        }
+
         function parseCoordinatesFromDescription(description) { if (!description) return null; const patterns = [ /lat:\s*(-?\d+\.?\d*)[,\s]+lon:\s*(-?\d+\.?\d*)/i, /coord(?:enadas)?:\s*(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/i, /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/ ]; for (const pattern of patterns) { const match = description.match(pattern); if (match) return { lat: parseFloat(match[1]), lon: parseFloat(match[2]) }; } console.warn("DEBUG: Coordenadas não encontradas:", description); return null;  }
         function updateMapFromPlaylist(playlist) { 
             if (!map) { console.warn("DEBUG: Mapa não inicializado para updateMapFromPlaylist."); return; }
             if (currentSingleMarker) { currentSingleMarker.remove(); currentSingleMarker = null; }
             mapMarkers.forEach(marker => marker.remove()); mapMarkers = [];
 
-            if (!playlist || !playlist.description) {
-                console.log("DEBUG updateMapFromPlaylist: Playlist inválida ou sem descrição. Usando fallback de visualização.");
-                map.setView([-23.4334, -45.0719], 13); 
-                return;
-            }
+            if (!playlist || !playlist.description) { map.setView([-23.4334, -45.0719], 13); return; }
             const coords = parseCoordinatesFromDescription(playlist.description);
             if (coords) {
-                currentSingleMarker = L.marker([coords.lat, coords.lon]).addTo(map)
-                    .bindPopup(`<b>${playlist.title || 'Localização Atual'}</b>`).openPopup();
-                map.invalidateSize(); 
-                map.setView([coords.lat, coords.lon], isMapMaximized ? map.getZoom() : 15); 
-                console.log("DEBUG updateMapFromPlaylist: Marcador para:", playlist.title, "em", coords, "Mapa centrado.");
-            } else {
-                console.log("DEBUG updateMapFromPlaylist: Coordenadas não encontradas. Usando fallback de visualização.");
-                map.invalidateSize();
-                map.setView([-23.4334, -45.0719], 10); 
-            }
+                currentSingleMarker = L.marker([coords.lat, coords.lon]).addTo(map).bindPopup(`<b>${playlist.title || 'Localização Atual'}</b>`).openPopup();
+                map.invalidateSize(); map.setView([coords.lat, coords.lon], isMapMaximized ? map.getZoom() : 15); 
+            } else { map.invalidateSize(); map.setView([-23.4334, -45.0719], 10); }
         }
         function updateMapPlaylistMarkers() { 
-            if (!map) { console.warn("DEBUG: Mapa não inicializado para marcadores múltiplos."); return; }
-            if (currentSingleMarker) { currentSingleMarker.remove(); currentSingleMarker = null; }
-            mapMarkers.forEach(marker => marker.remove()); mapMarkers = [];
-            let allValidCoords = [];
-
-            if (channelData.length === 0) { 
-                console.log("DEBUG updateMapPlaylistMarkers: Sem dados de canal. Exibindo fallback.");
-                const fallbackPlaylist = { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" };
-                updateMapFromPlaylist(fallbackPlaylist); 
-                return; 
-            }
-
-            channelData.forEach((ch) => { 
-                ch.playlists.forEach((pl) => { 
-                    if (pl.description) { 
-                        const coords = parseCoordinatesFromDescription(pl.description); 
-                        if (coords) { 
-                            const marker = L.marker([coords.lat, coords.lon]).addTo(map).bindPopup(`<b>${pl.title}</b><br><small>${ch.id}</small>`); 
-                            marker.on('click', () => { 
-                                if (isMapMaximized) { 
-                                    let actualChannelIndex = channelData.findIndex(c => c.id === ch.id);
-                                    let actualPlaylistIndex = channelData[actualChannelIndex]?.playlists.findIndex(p => p.id === pl.id);
-                                    if (actualChannelIndex !== -1 && actualPlaylistIndex !== -1) {
-                                        currentChannelPairIndex = INITIAL_CHANNEL_IDS.indexOf(ch.id); 
-                                        currentPlaylistPairIndices[0] = actualPlaylistIndex;
-                                        currentPlaylistPairIndices[1] = 0; 
-                                        currentVideoPairIndices = [0,0];
-                                        loadVideoPairByCurrentIndices(); 
-                                        toggleMapMaximize(); 
-                                    }
-                                } 
-                            }); 
-                            mapMarkers.push(marker); 
-                            allValidCoords.push(marker.getLatLng());
-                        } 
-                    } 
-                }); 
-            }); 
-            
-            if (allValidCoords.length > 0) {
-                const bounds = L.latLngBounds(allValidCoords);
-                if (bounds.isValid()) map.fitBounds(bounds.pad(0.1));  
-            } else {
-                console.log("DEBUG updateMapPlaylistMarkers: Nenhum marcador com coordenadas válidas. Usando fallback de visualização.");
-                map.setView([-23.4334, -45.0719], 10);
-            }
-            console.log("DEBUG: updateMapPlaylistMarkers concluído. Total de marcadores:", mapMarkers.length);
+            if (!map) { return; } if (currentSingleMarker) { currentSingleMarker.remove(); currentSingleMarker = null; }
+            mapMarkers.forEach(marker => marker.remove()); mapMarkers = []; let allValidCoords = [];
+            if (channelData.length === 0) { updateMapFromPlaylist({ title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" }); return; }
+            channelData.forEach((ch) => { ch.playlists.forEach((pl) => { if (pl.description) { const coords = parseCoordinatesFromDescription(pl.description); if (coords) { const marker = L.marker([coords.lat, coords.lon]).addTo(map).bindPopup(`<b>${pl.title}</b><br><small>${ch.id}</small>`); marker.on('click', () => { if (isMapMaximized) { let actualChannelIndex = channelData.findIndex(c => c.id === ch.id); let actualPlaylistIndex = channelData[actualChannelIndex]?.playlists.findIndex(p => p.id === pl.id); if (actualChannelIndex !== -1 && actualPlaylistIndex !== -1) { currentChannelPairIndex = INITIAL_CHANNEL_IDS.indexOf(ch.id); currentPlaylistPairIndices[0] = actualPlaylistIndex; currentPlaylistPairIndices[1] = 0; currentVideoPairIndices = [0,0]; loadVideoPairByCurrentIndices(); toggleMapMaximize(); }}}); mapMarkers.push(marker); allValidCoords.push(marker.getLatLng());}}});}); 
+            if (allValidCoords.length > 0) { const bounds = L.latLngBounds(allValidCoords); if (bounds.isValid()) map.fitBounds(bounds.pad(0.1));} 
+            else { map.setView([-23.4334, -45.0719], 10); }
         }
         
-        function toggleMapMaximize() { /* ... (código existente) ... */ 
+        function toggleMapMaximize() { 
             isMapMaximized = !isMapMaximized; 
             mapContainerElem.classList.toggle('maximized', isMapMaximized); 
-            requestAnimationFrame(() => { 
-                setTimeout(() => { 
-                    if (map) {
-                        map.invalidateSize(); 
-                        console.log("DEBUG toggleMapMaximize: map.invalidateSize() chamado.");
-                        if (isMapMaximized) {
-                            if (map.dragging && !map.dragging.enabled()) map.dragging.enable(); 
-                            if (map.scrollWheelZoom && !map.scrollWheelZoom.enabled()) map.scrollWheelZoom.enable();
-                            mapContainerElem.style.cursor = 'default'; 
-                            updateMapPlaylistMarkers(); 
-                        } else { 
-                            if (map.dragging && map.dragging.enabled()) map.dragging.disable(); 
-                            if (map.scrollWheelZoom && map.scrollWheelZoom.enabled()) map.scrollWheelZoom.disable();
-                            mapContainerElem.style.cursor = 'grab'; 
-                            let playlistToFocus;
-                            const ch1DataIdx = channelData.findIndex(ch => ch.id === INITIAL_CHANNEL_IDS[currentChannelPairIndex % INITIAL_CHANNEL_IDS.length]);
-                            if (ch1DataIdx !== -1 && channelData[ch1DataIdx]?.playlists[currentPlaylistPairIndices[0]]) {
-                                playlistToFocus = channelData[ch1DataIdx].playlists[currentPlaylistPairIndices[0]];
-                            } else {
-                                playlistToFocus = { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" };
-                            }
-                            updateMapFromPlaylist(playlistToFocus); 
-                        }
-                    }
-                }, 200); 
-            });
+            requestAnimationFrame(() => { setTimeout(() => { if (map) { map.invalidateSize(); if (isMapMaximized) { if (map.dragging && !map.dragging.enabled()) map.dragging.enable(); if (map.scrollWheelZoom && !map.scrollWheelZoom.enabled()) map.scrollWheelZoom.enable(); mapContainerElem.style.cursor = 'default'; updateMapPlaylistMarkers(); } else { if (map.dragging && map.dragging.enabled()) map.dragging.disable(); if (map.scrollWheelZoom && map.scrollWheelZoom.enabled()) map.scrollWheelZoom.disable(); mapContainerElem.style.cursor = 'grab'; let playlistToFocus; const ch1DataIdx = channelData.findIndex(ch => ch.id === INITIAL_CHANNEL_IDS[currentChannelPairIndex % INITIAL_CHANNEL_IDS.length]); if (ch1DataIdx !== -1 && channelData[ch1DataIdx]?.playlists[currentPlaylistPairIndices[0]]) { playlistToFocus = channelData[ch1DataIdx].playlists[currentPlaylistPairIndices[0]]; } else { playlistToFocus = { title: "Localização Padrão", description: "Ubatuba, Brasil. lat:-23.4334, lon:-45.0719" };} updateMapFromPlaylist(playlistToFocus);}}}, 200);});
         }
         function adjustMapPipPosition() {
             const paymentSectionEl = document.getElementById('payment-section'); 
@@ -1035,9 +1004,6 @@
             }
         }
 
-        // --- Botões Customizados dos Players ---
-        // function openYouTubeSubscribe(channelId) { // Função Removida
-        // }
         function openYouTubeShorts(videoId) {
             if (videoId) {
                 window.open(`https://www.youtube.com/watch?v=Acfxceoo5Z8{videoId}`, '_blank'); 
@@ -1046,52 +1012,19 @@
             }
         }
         
-        // --- Pagamentos (código existente, simplificado para este exemplo) ---
-        // ... (A lógica de Stripe e Mercado Pago permanece, mas não será o foco desta alteração de UI) ...
-        
-        // --- INICIALIZAÇÃO ---
         window.onload = () => {
-            // Atribui elementos DOM às variáveis globais
-            speedSliderElem = document.getElementById('speed-slider');
-            speedValueDisplayElem = document.getElementById('speed-value');
-            syncSliderElem = document.getElementById('sync-slider');   
-            volumeSlider1Elem = document.getElementById('volume-slider-1'); 
-            volumeSlider2Elem = document.getElementById('volume-slider-2'); 
-            playPauseButtonElem = document.getElementById('play-pause-button');
-            playPauseIconElem = playPauseButtonElem.querySelector('i');
-            
-            videoOuterContainer1Elem = document.getElementById('video-outer-container-1');
-            videoOuterContainer2Elem = document.getElementById('video-outer-container-2');
-            videoContainer1Elem = document.getElementById('video-container-1'); 
-            videoContainer2Elem = document.getElementById('video-container-2'); 
-
-            // subscribeBtn1Elem = document.getElementById('subscribe-btn-1'); // Removido
-            shortsBtn1Elem = document.getElementById('shorts-btn-1');
-            // subscribeBtn2Elem = document.getElementById('subscribe-btn-2'); // Removido
-            shortsBtn2Elem = document.getElementById('shorts-btn-2');
-
-            mapContainerElem = document.getElementById('map-container');
-            mapElementElem = document.getElementById('map-pip');
-            paymentSectionElem = document.getElementById('payment-section'); 
-            contributionAmountInputElem = document.getElementById('contribution-amount');
-            googlePayButtonElem = document.getElementById('google-pay-button');
-            applePayButtonElem = document.getElementById('apple-pay-button');
-            pixButtonElem = document.getElementById('pix-button');
-            pixPaymentBrickContainerElem = document.getElementById('pix-payment-brick-container');
-            userMessageAreaElem = document.getElementById('user-message-area');
-            topLeftChannelIconElem = document.getElementById('top-left-channel-icon');
-            topRightUpgradeButtonElem = document.getElementById('top-right-upgrade-button');
-            siteOverlayElem = document.getElementById('site-overlay');
-            paymentTitleElem = document.getElementById('payment-title');
-            mapGpsButtonElem = document.getElementById('map-gps-button'); 
-
-            // Configura os event listeners após os elementos estarem disponíveis
-            setupEventListeners();
+            initializeDOMElements(); 
+            setupEventListeners();   
 
             console.log("DEBUG: window.onload disparado.");
-            if (youtubeApiReady && (document.readyState === 'complete' || document.readyState === 'interactive')) {
+
+            if (youtubeApiReady) { 
+                console.log("DEBUG: window.onload - API do YouTube JÁ pronta. Chamando loadInitialVideoPair.");
                 loadInitialVideoPair();
+            } else {
+                console.log("DEBUG: window.onload - API do YouTube AINDA NÃO pronta. Aguardando onYouTubeIframeAPIReady.");
             }
+            
             initMap(); 
             adjustMapPipPosition(); 
 
