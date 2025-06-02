@@ -171,14 +171,14 @@
         /* Estilo dos Sliders (Velocidade e Sincronia) */
         .horizontal-sliders-container {
             width: 100%; 
-            max-width: calc(100% - 3rem); 
+            max-width: calc(100% - 3rem); /* Ajustado para nova largura dos volumes */
             margin-left: auto;
             margin-right: auto;
             box-sizing: border-box;
         }
          @media (min-width: 768px) {
              .horizontal-sliders-container {
-                 max-width: 22rem; 
+                 max-width: 22rem; /* Reduzido para alinhar melhor com os players */
              }
          }
 
@@ -830,7 +830,7 @@
                 }); 
                 container.addEventListener('dblclick', () => toggleMaximize(container.parentElement.parentElement)); /* Ajustado para .player-unit */
             });
-            if (mapElementElem) mapElementElem.addEventListener('dblclick', toggleMapMaximize); 
+            if (mapContainerElem) mapContainerElem.addEventListener('dblclick', toggleMapMaximize); 
             if (mapGpsButtonElem) { mapGpsButtonElem.addEventListener('click', () => { displayUserMessage("Funcionalidade GPS a ser implementada.", false, "info"); }); }
 
             shortsBtn1Elem.addEventListener('click', () => openYouTubeShorts(videoData1.id));
@@ -945,7 +945,7 @@
             map = L.map(mapElementElem, { center: [-23.4334, -45.0719], zoom: 13, scrollWheelZoom: false, zoomControl: false }); 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM contributors' }).addTo(map); 
             makeMapDraggable(); 
-            if (mapElementElem) mapElementElem.addEventListener('dblclick', toggleMapMaximize); 
+            if (mapContainerElem) mapContainerElem.addEventListener('dblclick', toggleMapMaximize); 
             adjustMapPipPosition(); 
         } 
         function makeMapDraggable() {
