@@ -2,7 +2,9 @@
   "name": "dual-youtube-player-pro-v2",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "dependencies": {
     "mercadopago": "^2.0.10"
+    
   }
 }
