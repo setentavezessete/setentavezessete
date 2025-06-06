@@ -1,8 +1,8 @@
 {
-  "name": "dual-video-player-payments",
+  "name": "dual-youtube-player-pro-v2",
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "stripe": "^15.0.0"
+    "mercadopago": "^2.0.10"
   }
 }

@@ -489,7 +489,7 @@
             const YOUTUBE_API_KEY = 'AIzaSyD_Zsq3U7B_ThlZpXYcntuv2Atqavde90A'; 
             const SUPABASE_URL = 'https://uralqyrgxkohymxntxby.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyYWxxeXJneGtvaHlteG50eGJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ2MDg3MDAsImV4cCI6MjA2MDE4NDcwMH0.02dZve6eoHcELI6Fb4wmn8rjm09zpUUayxm2VSYoRdc';
-            const MERCADO_PAGO_PUBLIC_KEY = 'TEST-8605317f-051f-4886-867d-6fcc935ff498';
+            const MERCADO_PAGO_PUBLIC_KEY = 'TEST-4134627361624047-051601-81baf038badc6298fa4f2639bf66fe08-1354086707';
             const STRIPE_PUBLIC_KEY = 'pk_test_51RHDsbR3BZuxLobHLeQeYTDF462ZqvsBRRlIJ0phA7FYmCQn784NMXfuNRxOOZWWLHzpI2HozsbEFalZXsDdQMG400l8FJXush';
             const STRIPE_FIXED_PRICE_ID_FOR_LOCAL_TEST = 'price_1RSXVNR3BZuxLobHMcqGxB8b'; 
             const INITIAL_CHANNEL_IDS = ['UCLStyr92FK6hIV2LuTUxb8Q', 'UCTgA53H26v-UpV0kq5CZEtQ', 'UC_DxTOFRi6a7USg8RfZqc5Q', 'UCCC2DCVgsgobfyLjr37M70A'];
@@ -838,8 +838,88 @@
 
                 googlePayButtonElem.addEventListener('click', () => displayUserMessage("Google Pay não implementado.", false, "warn", 4000));
                 applePayButtonElem.addEventListener('click', () => displayUserMessage("Apple Pay não implementado.", false, "warn", 4000));
-                pixButtonElem.addEventListener('click', () => displayUserMessage("PIX não implementado.", false, "warn", 4000));
+                /* ================================================================
+  COLE ESTE BLOCO NO LUGAR DO 'addEventListener' DO pixButtonElem
+================================================================
+*/
 
+pixButtonElem.addEventListener('click', async () => {
+    // 1. Validar o valor usando as suas variáveis de elementos
+    const amount = parseFloat(contributionAmountInputElem.value);
+    const isUpgradeMode = paymentSectionElem.classList.contains('upgrade-mode');
+    
+    // Validação do valor, considerando o modo Upgrade
+    if (!isUpgradeMode && (isNaN(amount) || amount < 0.50)) {
+        displayUserMessage("Valor inválido para PIX (mínimo R$0.50).", false, "error");
+        return;
+    }
+
+    // 2. Dar feedback ao utilizador e desativar o botão
+    pixButtonElem.disabled = true;
+    displayUserMessage("A gerar PIX, por favor aguarde...", true, "info"); 
+    pixPaymentBrickContainerElem.innerHTML = '<div class="text-center text-gray-400">A processar...</div>'; 
+
+    try {
+        // 3. Fazer a chamada de API para o nosso backend
+        const response = await fetch('/api/criar-pagamento-mp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                transactionAmount: amount,
+                description: isUpgradeMode ? 'Upgrade para o plano PRO' : 'Contribuição para Dual YouTube Player Pro',
+                // Geramos um email único para o pagador para evitar conflitos no Mercado Pago
+                email: `payer-${Date.now()}@seusite.com`, 
+            }),
+        });
+
+        const data = await response.json();
+
+        // 4. Verificar se a chamada de API falhou
+        if (!response.ok) {
+            // Se o nosso backend retornou um erro, exibe-o
+            throw new Error(data.error || 'Falha ao comunicar com o servidor.');
+        }
+
+        // 5. Se teve sucesso, renderizar o QR Code e o código "Copia e Cola"
+        pixPaymentBrickContainerElem.innerHTML = `
+            <div class="text-center p-2 bg-gray-800 rounded-lg">
+                <p class="text-white mb-2 text-sm">Escaneie o QR Code para pagar!</p>
+                <img src="data:image/jpeg;base64,${data.qr_code_base64}" alt="PIX QR Code" class="mx-auto my-3 border-4 border-white rounded-lg w-40 h-40">
+                <p class="text-white text-xs mb-2">Ou copie o código abaixo:</p>
+                <div class="flex items-center bg-gray-900 rounded-md p-2">
+                    <input type="text" id="pix-copy-paste-code" value="${data.qr_code}" readonly class="bg-transparent text-gray-400 text-xs w-full outline-none no-scrollbar">
+                    <button id="copy-pix-button" class="ml-2 text-teal-400 hover:text-teal-300" title="Copiar código">
+                        <i class="far fa-copy fa-lg"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // 6. Adicionar a funcionalidade de copiar ao novo botão
+        document.getElementById('copy-pix-button').addEventListener('click', () => {
+            const pixInput = document.getElementById('pix-copy-paste-code');
+            if (navigator.clipboard && pixInput) {
+                 navigator.clipboard.writeText(pixInput.value).then(() => {
+                    displayUserMessage("Código PIX copiado!", false, "success", 2000);
+                }, () => {
+                    displayUserMessage("Erro ao copiar o código.", false, "error", 3000);
+                });
+            }
+        });
+
+        // Limpa a mensagem "A gerar..." e mostra sucesso.
+        displayUserMessage("PIX gerado! Agora é só pagar.", false, "success", 5000);
+
+    } catch (error) {
+        console.error("Erro no processo de pagamento PIX:", error);
+        // Exibe o erro para o utilizador
+        displayUserMessage(`Erro: ${error.message}`, false, "error", 5000); 
+        pixPaymentBrickContainerElem.innerHTML = `<p class="text-red-400 text-center">Ocorreu um problema ao gerar o PIX. Por favor, tente novamente.</p>`;
+    } finally {
+        // 7. Reativa o botão no final, seja em caso de sucesso ou erro
+        pixButtonElem.disabled = false;
+    }
+});
                 const paymentSectionForObserver = document.getElementById('payment-section');
                 if (paymentSectionForObserver) {
                     const paymentObserver = new MutationObserver(adjustMapPipPosition);
