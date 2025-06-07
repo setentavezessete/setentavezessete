@@ -2,111 +2,447 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste de Pagamento PIX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dual YouTube Player Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
-</head>
-<body class="bg-gray-900 text-white flex justify-center items-center min-h-screen">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://js.stripe.com/v3/"></script> 
+    <script src="https://sdk.mercadopago.com/js/v2"></script> 
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
-    <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-sm">
-        <h1 class="text-2xl font-bold text-center mb-6">Contribuição via PIX</h1>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; 
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior-y: none; 
+            display: flex;
+            flex-direction: column;
+            background-color: #111827; /* bg-gray-900 */
+            color: white;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        <div class="mb-4">
-            <label for="contribution-amount" class="block text-sm font-medium text-gray-300 mb-1">Valor (BRL)</label>
-            <input type="text" id="contribution-amount" placeholder="Ex: 10,50" class="w-full p-2 rounded bg-gray-700 text-white focus:ring-2 focus:ring-teal-500 outline-none">
-        </div>
+        .main-content-area {
+            flex-grow: 1; 
+            overflow-y: auto; 
+            padding-left: 0.5rem; 
+            padding-right: 0.5rem;
+            padding-top: 85px; 
+            padding-bottom: 270px; 
+        }
+        @media (min-width: 768px) { 
+            .main-content-area {
+                padding-left: 1rem; 
+                padding-right: 1rem;
+                padding-top: 90px; 
+                padding-bottom: 270px; 
+            }
+        }
 
-        <button id="pix-button" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded transition-transform duration-100 ease-in-out active:scale-95">
-            Gerar PIX
-        </button>
-
-        <div id="pix-container" class="my-6"></div>
+        .video-controls-container {
+            width: 100%;
+            max-width: 1024px; 
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
         
-        <div id="status-message" class="text-center text-sm min-h-[20px]"></div>
+        #player-wrapper { 
+            display: flex; 
+            flex-grow: 1; 
+            gap: 0.5rem; 
+            margin-bottom: 0.5rem; 
+            width: 100%; 
+        }
+        
+        .player-unit { 
+            display: flex;
+            align-items: stretch;
+            width: 100%; 
+            position: relative;
+        }
+
+        .volume-slider-container { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 0 0.25rem; 
+            flex-shrink: 0; 
+        }
+    
+        .video-outer-container { 
+            flex-grow: 1; 
+            position: relative; 
+        }
+        
+        @media (min-width: 768px) { 
+            #player-wrapper {
+                flex-direction: row;
+            }
+            .player-unit {
+                width: 50%; 
+            }
+            .volume-slider-container { 
+                padding: 0 0.35rem;
+            }
+        }
+        @media (max-width: 767px) { 
+            .video-controls-container {
+                margin-left: 0; 
+                margin-right: 0;
+                width: 100%;
+                padding-left: 0; 
+                padding-right: 0;
+            }
+            #player-wrapper {
+                flex-direction: column;
+                align-items: stretch; 
+                gap: 0.75rem; 
+            }
+            .player-unit {
+                width: 100%; 
+            }
+            .horizontal-sliders-container,
+            .video-controls-container > .my-3.flex.flex-wrap.justify-center {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+                box-sizing: border-box;
+            }
+        }
+
+        .video-container { 
+            width: 100%; 
+            aspect-ratio: 16/9; 
+            position: relative; 
+            background-color: #000000; 
+            border-radius: 8px; 
+            overflow: hidden; 
+        }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        .maximized .player-unit { width: 100% !important; } 
+        .maximized .video-outer-container { width: auto !important; flex-grow: 1 !important; }
+        .hidden-player-unit { display: none !important; }
+
+        .player-overlay-buttons { position: absolute; bottom: 8px; right: 8px; display: flex; justify-content: flex-end; align-items: center; z-index: 10; pointer-events: none; }
+        .player-overlay-buttons button { background-color: rgba(20, 20, 20, 0.9); color: #FFFFFF; border: none; padding: 7px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; transition: background-color 0.2s; pointer-events: auto; display: flex; align-items: center; line-height: 1; box-shadow: 0 1px 2px rgba(0,0,0,0.3); cursor: pointer; }
+        .player-overlay-buttons button:hover { background-color: rgba(50, 50, 50, 0.95); }
+        .player-overlay-buttons button .fas { margin-right: 0.4rem; font-size: 1em; }
+
+        .horizontal-sliders-container { width: 100%; max-width: calc(100% - 3rem); margin-left: auto; margin-right: auto; box-sizing: border-box; }
+        @media (min-width: 768px) { .horizontal-sliders-container { max-width: calc(100% - (2 * 1.25rem + 4 * 0.35rem)); } }
+
+        input[type="range"].styled-slider { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; width: 100%; height: 1.5rem; }
+        input[type="range"].styled-slider::-webkit-slider-runnable-track { background: #4B5563; height: 0.3rem; border-radius: 0.15rem; }
+        input[type="range"].styled-slider::-moz-range-track { background: #4B5563; height: 0.3rem; border-radius: 0.15rem; }
+        input[type="range"].styled-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; margin-top: -0.4rem; background-color: #f59e0b; height: 1.1rem; width: 1.1rem; border-radius: 50%; border: 1px solid #e5e7eb; }
+        input[type="range"].styled-slider::-moz-range-thumb { background-color: #f59e0b; height: 1.1rem; width: 1.1rem; border-radius: 50%; border: 1px solid #e5e7eb; }
+
+        input[type="range"].volume-slider-vertical { writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 1.25rem; padding: 0 3px; background: #4B5563; border-radius: 0.25rem; }
+        input[type="range"].volume-slider-vertical::-webkit-slider-runnable-track { background: transparent; width: 0.25rem; height: 100%; border-radius: 0.125rem; }
+        input[type="range"].volume-slider-vertical::-moz-range-track { background: transparent; width: 0.25rem; height: 100%; border-radius: 0.125rem; }
+        input[type="range"].volume-slider-vertical::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; margin-left: -0.5rem; background-color: #0054A6; height: 1.25rem; width: 1.25rem; border-radius: 50%; border: 1px solid rgba(229, 231, 235, 0.4); cursor: pointer; }
+        input[type="range"].volume-slider-vertical::-moz-range-thumb { background-color: #0054A6; height: 1.25rem; width: 1.25rem; border-radius: 50%; border: 1px solid rgba(229, 231, 235, 0.4); cursor: pointer; }
+        input[type="range"].volume-slider-vertical.royal-blue-fill { background: linear-gradient(to top, #0054A6 var(--value-percent, 50%), #4B5563 var(--value-percent, 50%)); }
+        
+        #map-container { width: 187px; height: 140px; position: fixed; bottom: 20px; right: 20px; z-index: 999; border: 2px solid #4b5563; border-radius: 8px; overflow: hidden; cursor: grab; transition: width 0.3s ease, height 0.3s ease, bottom 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        #map-container.maximized { width: 95vw; height: 85vh; top: 50%; left: 50%; transform: translate(-50%, -50%); cursor: default; bottom: auto !important; z-index: 1005; }
+        #map-pip { width: 100%; height: 100%; }
+        .leaflet-control-zoom { display: none !important; } 
+        #map-gps-button { position: absolute; top: 5px; left: 5px; z-index: 1000; background-color: rgba(255,255,255,0.8); color: #333; border: 1px solid #ccc; border-radius: 4px; padding: 3px 5px; cursor: pointer; font-size: 1em; }
+        #map-gps-button:hover { background-color: #f4f4f4; }
+
+        .payment-button { transition: transform 0.1s ease-in-out; }
+        .payment-button:active { transform: scale(0.95); }
+        
+        .control-button { background-color: #0054A6; color: #e5e7eb; border: 1px solid #004182; padding: 0.5rem 0.75rem; border-radius: 0.375rem; transition: background-color 0.2s, color 0.2s; font-size: 1.25rem; }
+        .control-button:hover { background-color: #004182; color: white; }
+        .control-button:disabled { background-color: #4b5563; color: #9ca3af; cursor: not-allowed; }
+        
+        #payment-section { position: fixed; bottom: 0; left: 0; right: 0; background-color: #1f2937; padding: 1rem; border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.5); z-index: 1001; max-width: 600px; margin-left: auto; margin-right: auto; }
+        #payment-section.hidden { transform: translateY(100%); }
+        #payment-section.upgrade-mode { z-index: 2001; }
+        #payment-title.upgrade-title { background-image: linear-gradient(to right, #f59e0b, #fbbf24); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: bold; }
+
+        #site-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); z-index: 2000; display: none; }
+
+        #top-left-channel-icon, #top-right-upgrade-button { position: fixed; top: 10px; z-index: 1005; padding: 0.5rem 0.75rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.9rem; font-weight: 500; }
+        #top-left-channel-icon { left: 10px; background-color: rgba(31, 41, 55, 0.8); color: white; border: 1px solid #4b5563; }
+        #top-left-channel-icon:hover { background-color: #374151; }
+        #top-right-upgrade-button { right: 10px; background-color: #f59e0b; color: black; }
+        #top-right-upgrade-button:hover { background-color: #d97706; }
+        #top-center-chinese-text { position: fixed; top: 12px; left: 100px; right: 110px; z-index: 1005; padding: 0.3rem 0.1rem; background-color: rgba(31, 41, 55, 0.7); border-radius: 0.375rem; font-size: 0.75rem; text-align: center; color: #e5e7eb; letter-spacing: 0.05em; box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: normal; }
+        #pix-payment-container { margin-top: 0.75rem; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-start min-h-screen no-scrollbar"> 
+    
+    <div id="site-overlay"></div> 
+    <button id="top-left-channel-icon" title="Atualizar Página">70x07</button>
+    <button id="top-right-upgrade-button">Upgrade</button>
+    <div id="top-center-chinese-text">在这里，即使是没有时间的文盲也可以在玩乐的同时学习多达两种语言。</div>
+
+    <div class="w-full max-w-5xl mx-auto mt-4 main-content-area no-scrollbar"> 
+        <div class="video-controls-container">
+            <div class="my-2 w-full horizontal-sliders-container"> 
+                <input type="range" id="speed-slider" min="0.07" max="3" step="0.01" value="1" class="styled-slider w-full" title="Ajustar velocidade" aria-label="Ajustar velocidade">
+            </div>
+            
+            <div id="player-wrapper" class="flex flex-wrap md:flex-nowrap"> 
+                <div class="player-unit w-full md:w-1/2 flex p-1">
+                    <div class="volume-slider-container">
+                        <input type="range" id="volume-slider-1" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-[85%]" title="Volume Vídeo 1" aria-label="Volume Vídeo 1">
+                    </div>
+                    <div id="video-outer-container-1" class="video-outer-container flex-grow">
+                        <div id="video-container-1" class="video-container">
+                            <div id="player1"></div>
+                            <div class="player-overlay-buttons">
+                                <button id="shorts-btn-1"><i class="fas fa-bolt"></i> Shorts</button> 
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="player-unit w-full md:w-1/2 flex p-1">
+                    <div class="volume-slider-container">
+                        <input type="range" id="volume-slider-2" min="0" max="100" value="50" orient="vertical" class="volume-slider-vertical royal-blue-fill h-[85%]" title="Volume Vídeo 2" aria-label="Volume Vídeo 2">
+                    </div>
+                    <div id="video-outer-container-2" class="video-outer-container flex-grow">
+                        <div id="video-container-2" class="video-container">
+                            <div id="player2"></div>
+                            <div class="player-overlay-buttons">
+                                <button id="shorts-btn-2"><i class="fas fa-bolt"></i> Shorts</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="my-2 w-full horizontal-sliders-container"> 
+                <input type="range" id="sync-slider" min="-3" max="3" step="0.1" value="0" class="styled-slider w-full" title="Ajustar sincronia" aria-label="Ajustar sincronia">
+            </div>
+            <div class="my-3 flex flex-wrap justify-center items-center gap-1 md:gap-2"> <button id="prev-channel-pair" class="control-button" title="Par de Canais Anterior"><i class="fas fa-angle-double-left"></i></button>
+                <button id="prev-playlist-pair" class="control-button" title="Par de Playlists Anterior"><i class="fas fa-angle-left"></i></button>
+                <button id="prev-video-pair" class="control-button" title="Par de Vídeos Anterior"><i class="fas fa-backward"></i></button>
+                <button id="play-pause-button" class="control-button text-2xl min-w-[3.5rem] text-center" title="Play/Pause"><i class="fas fa-play"></i></button>
+                <button id="next-video-pair" class="control-button" title="Próximo Par de Vídeos"><i class="fas fa-forward"></i></button>
+                <button id="next-playlist-pair" class="control-button" title="Próximo Par de Playlists"><i class="fas fa-angle-right"></i></button>
+                <button id="next-channel-pair" class="control-button" title="Próximo Par de Canais"><i class="fas fa-angle-double-right"></i></button>
+            </div>
+            </div>
+    </div>
+
+    <div id="map-container">
+        <div id="map-pip"></div>
+        <button id="map-gps-button" title="Localização Atual (placeholder)">
+            <i class="fas fa-location-crosshairs"></i>
+        </button>
+    </div>
+
+    <div id="payment-section"> 
+        <h3 id="payment-title" class="text-lg font-semibold text-center mb-3">Faça uma Contribuição</h3>
+        <div class="flex items-center mb-3">
+            <input type="text" id="contribution-amount" placeholder="Ex: 10.00" class="flex-grow p-2 rounded bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none">
+        </div>
+        <div id="payment-buttons-container" class="flex flex-wrap gap-2 mb-2">
+            <button id="apple-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded flex items-center justify-center" style="width: calc(48% - 0.25rem);"><img src="https://applepay.cdn-apple.com/static/img/logo/applepay_logo_rgb_dark.svg" alt="Apple Pay" class="h-8" onerror="this.style.display='none'"> </button>
+            <button id="google-pay-button" class="payment-button bg-black text-white py-2 px-4 rounded flex items-center justify-center" style="width: calc(48% - 0.25rem);"><img src="https://developers.google.com/static/pay/images/GPay.svg" alt="Google Pay" class="h-6 mr-2" onerror="this.style.display='none'"> Pagar</button>
+        </div>
+        <button id="pix-button" class="payment-button bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded w-full flex items-center justify-center"><img src="https://img.icons8.com/ios-filled/50/ffffff/pix.png" alt="PIX" class="h-6 mr-2" onerror="this.src='https://placehold.co/24x24/000000/FFFFFF?text=PIX'; this.classList.remove('h-6'); this.classList.add('h-5', 'w-5');">PIX</button>
+        
+        <div id="pix-payment-container" class="my-3"></div>
+
+        <p id="payment-footer-text" class="text-xs text-gray-500 mt-2 text-center">Pagamentos processados por Stripe e Mercado Pago (Modo Teste).</p>
+        <div id="user-message-area" class="text-center text-sm mt-2 text-green-400"></div> 
     </div>
 
     <script>
+        // --- SCRIPT TAG FOR YOUTUBE API ---
+        (function() {
+            const tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api"; 
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            if (firstScriptTag && firstScriptTag.parentNode) {
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            } else {
+                document.head.appendChild(tag);
+            }
+        })();
+
         // --- CONFIGURAÇÃO ---
-        // POR FAVOR, CONFIRME QUE ESTA É A SUA CHAVE PÚBLICA CORRETA
-        const MERCADO_PAGO_PUBLIC_KEY = 'TEST-947b087d-7607-4793-8c28-88d1339e5a93 
-';
-        const mp = new MercadoPago(MERCADO_PAGO_PUBLIC_KEY);
+        const YOUTUBE_API_KEY = 'AIzaSyD_Zsq3U7B_ThlZpXYcntuv2Atqavde90A'; 
+        const SUPABASE_URL = 'https://uralqyrgxkohymxntxby.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyYWxxeXJneGtvaHlteG50eGJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ2MDg3MDAsImV4cCI6MjA2MDE4NDcwMH0.02dZve6eoHcELI6Fb4wmn8rjm09zpUUayxm2VSYoRdc';
+        // POR FAVOR, VERIFIQUE SE ESTA É A SUA CHAVE PÚBLICA CORRETA
+        const MERCADO_PAGO_PUBLIC_KEY = 'TEST-947b087d-7607-4793-8c28-88d1339e5a93';
+        const STRIPE_PUBLIC_KEY = 'pk_live_51RHDsFBwW04kM5X4WKgxiAEvGRvm1fUH5Qe6yDkOPL1Sb3pqFTud6PMyQJIT2PrXuZMZZK4HVOng5HnWrjIdStCn001NIA50TI';
+
+        // --- ESTADO GLOBAL ---
+        let player1, player2, map;
+        let p1State = -1, p2State = -1; 
+        let currentSpeed = 1.0;
+        let syncOffset = 0; 
+        let channelData = [];
+        // ... (outras variáveis de estado que você tinha)
 
         // --- ELEMENTOS DOM ---
-        const amountInput = document.getElementById('contribution-amount');
-        const pixButton = document.getElementById('pix-button');
-        const pixContainer = document.getElementById('pix-container');
-        const statusMessage = document.getElementById('status-message');
+        let speedSliderElem, syncSliderElem, volumeSlider1Elem, volumeSlider2Elem, playPauseButtonElem, playPauseIconElem;
+        let videoContainer1Elem, videoContainer2Elem, shortsBtn1Elem, shortsBtn2Elem, mapContainerElem, mapElementElem;
+        let paymentSectionElem, contributionAmountInputElem, googlePayButtonElem, applePayButtonElem, pixButtonElem;
+        let pixPaymentContainerElem, userMessageAreaElem, topLeftChannelIconElem, topRightUpgradeButtonElem, siteOverlayElem;
+        let paymentTitleElem, mapGpsButtonElem;
+        
+        function initializeDOMElements() {
+            speedSliderElem = document.getElementById('speed-slider');
+            syncSliderElem = document.getElementById('sync-slider'); 
+            volumeSlider1Elem = document.getElementById('volume-slider-1'); 
+            volumeSlider2Elem = document.getElementById('volume-slider-2'); 
+            playPauseButtonElem = document.getElementById('play-pause-button');
+            playPauseIconElem = playPauseButtonElem.querySelector('i');
+            
+            videoContainer1Elem = document.getElementById('video-container-1'); 
+            videoContainer2Elem = document.getElementById('video-container-2'); 
+            shortsBtn1Elem = document.getElementById('shorts-btn-1');
+            shortsBtn2Elem = document.getElementById('shorts-btn-2');
 
-        // --- LÓGICA DO PAGAMENTO ---
-        pixButton.addEventListener('click', async () => {
-            // 1. Limpar e validar o valor do input
-            let rawValue = amountInput.value || '0';
-            let cleanValue = rawValue.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
-            const amount = parseFloat(cleanValue);
+            mapContainerElem = document.getElementById('map-container');
+            mapElementElem = document.getElementById('map-pip');
+            mapGpsButtonElem = document.getElementById('map-gps-button'); 
 
-            if (isNaN(amount) || amount < 0.50) {
-                statusMessage.textContent = 'Por favor, insira um valor válido (mínimo R$0.50).';
-                statusMessage.style.color = 'rgb(239, 68, 68)'; // Vermelho
-                return;
+            paymentSectionElem = document.getElementById('payment-section'); 
+            contributionAmountInputElem = document.getElementById('contribution-amount');
+            googlePayButtonElem = document.getElementById('google-pay-button');
+            applePayButtonElem = document.getElementById('apple-pay-button');
+            pixButtonElem = document.getElementById('pix-button');
+            pixPaymentContainerElem = document.getElementById('pix-payment-container'); // ALVO DO PIX
+            userMessageAreaElem = document.getElementById('user-message-area');
+            topLeftChannelIconElem = document.getElementById('top-left-channel-icon');
+            topRightUpgradeButtonElem = document.getElementById('top-right-upgrade-button');
+            siteOverlayElem = document.getElementById('site-overlay');
+            paymentTitleElem = document.getElementById('payment-title');
+            console.log("DEBUG: initializeDOMElements concluído.");
+        }
+        
+        function displayUserMessage(message, isPermanent = false, type = "info", duration = 3000) {
+            if (userMessageAreaElem) {
+                userMessageAreaElem.textContent = message;
+                if (type === "error") userMessageAreaElem.style.color = "#f87171"; // Vermelho
+                else if (type === "success") userMessageAreaElem.style.color = "#4ade80"; // Verde
+                else userMessageAreaElem.style.color = "white";
+
+                if (!isPermanent) {
+                    setTimeout(() => {
+                        if (userMessageAreaElem.textContent === message) userMessageAreaElem.textContent = '';
+                    }, duration);
+                }
             }
+        }
 
-            // 2. Dar feedback ao utilizador
-            pixButton.disabled = true;
-            pixButton.textContent = 'A gerar...';
-            statusMessage.textContent = 'Comunicando com o servidor...';
-            statusMessage.style.color = 'white';
-            pixContainer.innerHTML = '';
+        // --- LÓGICA DE PAGAMENTO PIX ---
+        function setupPaymentListeners() {
+            if (!pixButtonElem) return;
 
-            try {
-                // 3. Chamar o nosso backend
-                const response = await fetch('/api/criar-pagamento-mp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ transactionAmount: amount }),
-                });
+            pixButtonElem.addEventListener('click', async () => {
+                // 1. Limpa e valida o valor do input
+                let rawValue = contributionAmountInputElem.value || '0';
+                let cleanValue = rawValue.replace('R$', '').trim().replace(/\./g, '').replace(',', '.');
+                const amount = parseFloat(cleanValue);
+                const isUpgradeMode = paymentSectionElem.classList.contains('upgrade-mode');
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.details || data.error || 'Ocorreu um erro desconhecido.');
+                if (!isUpgradeMode && (isNaN(amount) || amount < 0.50)) {
+                    displayUserMessage("Valor inválido para PIX (mínimo R$0.50).", false, "error");
+                    return;
                 }
 
-                // 4. Mostrar o QR Code se tudo correu bem
-                statusMessage.textContent = 'QR Code gerado com sucesso!';
-                statusMessage.style.color = 'rgb(74, 222, 128)'; // Verde
-                
-                pixContainer.innerHTML = `
-                    <div class="text-center">
-                        <p class="text-white mb-2 text-sm">Escaneie para pagar!</p>
-                        <img src="data:image/jpeg;base64,${data.qr_code_base64}" alt="PIX QR Code" class="mx-auto my-3 border-4 border-white rounded-lg w-48 h-48">
-                        <p class="text-white text-xs mb-2">Ou copie o código:</p>
-                        <div class="flex items-center bg-gray-900 rounded-md p-2">
-                            <input type="text" id="pix-code" value="${data.qr_code}" readonly class="bg-transparent text-gray-400 text-xs w-full outline-none no-scrollbar">
-                            <button onclick="copyPixCode()" class="ml-2 text-teal-400 hover:text-teal-300" title="Copiar">Copiar</button>
+                // 2. Dá feedback ao utilizador
+                pixButtonElem.disabled = true;
+                const originalButtonContent = pixButtonElem.innerHTML;
+                pixButtonElem.innerHTML = 'Aguarde...';
+                displayUserMessage("A gerar PIX...", true, "info");
+                pixPaymentContainerElem.innerHTML = '';
+
+                try {
+                    // 3. Chama o backend
+                    const response = await fetch('/api/criar-pagamento-mp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            transactionAmount: amount,
+                            description: isUpgradeMode ? 'Upgrade para o plano PRO' : 'Contribuição para Dual YouTube Player Pro',
+                        }),
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.details || data.error || 'Erro do servidor.');
+                    }
+
+                    // 4. Mostra o QR Code
+                    displayUserMessage("QR Code gerado! Escaneie para pagar.", true, "success");
+                    pixPaymentContainerElem.innerHTML = `
+                        <div class="text-center p-2 bg-gray-900 rounded-lg">
+                            <img src="data:image/jpeg;base64,${data.qr_code_base64}" alt="PIX QR Code" class="mx-auto my-3 border-4 border-white rounded-lg w-48 h-48">
+                            <p class="text-white text-xs mb-2">Ou copie o código abaixo:</p>
+                            <div class="flex items-center bg-gray-700 rounded-md p-2">
+                                <input type="text" id="pix-copy-paste-code" value="${data.qr_code}" readonly class="bg-transparent text-gray-300 text-xs w-full outline-none no-scrollbar">
+                                <button id="copy-pix-button" class="ml-2 text-teal-400 hover:text-teal-300" title="Copiar">Copiar</button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                    document.getElementById('copy-pix-button').addEventListener('click', () => {
+                        const pixInput = document.getElementById('pix-copy-paste-code');
+                        navigator.clipboard.writeText(pixInput.value).then(() => {
+                            displayUserMessage("Código PIX copiado!", false, "success", 2000);
+                        });
+                    });
 
-            } catch (error) {
-                console.error("Erro no processo PIX:", error);
-                statusMessage.textContent = `Erro: ${error.message}`;
-                statusMessage.style.color = 'rgb(239, 68, 68)'; // Vermelho
-            } finally {
-                // 5. Reativar o botão
-                pixButton.disabled = false;
-                pixButton.textContent = 'Gerar PIX';
-            }
-        });
-
-        function copyPixCode() {
-            const input = document.getElementById('pix-code');
-            navigator.clipboard.writeText(input.value).then(() => {
-                statusMessage.textContent = 'Código PIX copiado!';
-                statusMessage.style.color = 'rgb(74, 222, 128)'; // Verde
+                } catch (error) {
+                    displayUserMessage(`Erro: ${error.message}`, false, "error", 5000);
+                    pixPaymentContainerElem.innerHTML = `<p class="text-red-400 text-center">Não foi possível gerar o PIX.</p>`;
+                } finally {
+                    // 5. Reativa o botão
+                    pixButtonElem.disabled = false;
+                    pixButtonElem.innerHTML = originalButtonContent;
+                }
             });
+            
+            // Adicione aqui os listeners para googlePayButtonElem e applePayButtonElem se necessário
         }
+
+        // --- INICIALIZAÇÃO E LÓGICA PRINCIPAL ---
+        window.onload = () => {
+            initializeDOMElements();
+            setupEventListeners(); // Função principal para todos os event listeners
+            initMap();
+        };
+
+        function setupEventListeners() {
+            // ... (coloque aqui toda a sua lógica de 'addEventListener' para os controlos do player, sliders, etc.)
+            
+            // Adiciona a lógica de pagamento
+            setupPaymentListeners();
+
+            // Exemplo de como era o seu código:
+            // speedSliderElem.addEventListener('input', ...);
+            // syncSliderElem.addEventListener('input', ...);
+            // etc...
+            
+            console.log("DEBUG: setupEventListeners concluído.");
+        }
+        
+        function initMap() {
+            // ... (sua função initMap)
+        }
+
+        // ... (todas as suas outras funções: onYouTubeIframeAPIReady, loadInitialVideoPair, createPlayers, etc.)
+
     </script>
 </body>
 </html>
