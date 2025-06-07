@@ -845,7 +845,18 @@
 
 pixButtonElem.addEventListener('click', async () => {
     // 1. Validar o valor usando as suas variáveis de elementos
-    const amount = parseFloat(contributionAmountInputElem.value);
+   // --- Início do NOVO código ---
+
+// Pega o valor "sujo" do campo de input, ou '0' se estiver vazio.
+const rawValue = contributionAmountInputElem.value || '0'; 
+
+// "Limpa" o valor: remove o "R$", espaços, e troca a vírgula por ponto para o JavaScript entender.
+const cleanValue = rawValue.replace('R$', '').trim().replace(',', '.');
+
+// Agora sim, converte o valor limpo para um número.
+const amount = parseFloat(cleanValue);
+
+// --- Fim do NOVO código ---
     const isUpgradeMode = paymentSectionElem.classList.contains('upgrade-mode');
     
     // Validação do valor, considerando o modo Upgrade
