@@ -65,4 +65,4 @@ export default async function handler(req, res) {
         return res.status(405).end('Method Not Allowed');
     }
 }
-// Forçando a atualização do ficheiro
+// Teste final e definitivo
