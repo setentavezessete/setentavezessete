@@ -9,17 +9,20 @@ const client = new MercadoPagoConfig({
 export default async function handler(req, res) {
     if (req.method === 'POST') {
         try {
+            // LINHA DO "ESPIÃO" - VAI MOSTRAR OS DADOS EXATOS QUE O FRONTEND ENVIOU
+            console.log('DADOS RECEBIDOS NO CORPO DA REQUISIÇÃO:', req.body);
+
             const { transactionAmount, description, email } = req.body;
-            if (!transactionAmount || !description || !email) {
-                return res.status(400).json({ error: 'Dados insuficientes.' });
+            
+            // Adicionando uma barreira de proteção extra no backend
+            if (typeof transactionAmount !== 'number' || isNaN(transactionAmount) || transactionAmount < 0.50) {
+                 return res.status(400).json({ error: "Valor da transação inválido, nulo ou menor que R$0.50." });
             }
 
             const payment = new Payment(client);
 
-            // CORREÇÃO APLICADA AQUI:
-            // Os dados do pagamento são passados diretamente, sem estarem dentro de um "body:".
             const paymentResult = await payment.create({
-                transaction_amount: Number(transactionAmount),
+                transaction_amount: transactionAmount, // Já é um número, não precisa de Number()
                 description: description,
                 payment_method_id: 'pix',
                 payer: {

@@ -848,13 +848,21 @@ pixButtonElem.addEventListener('click', async () => {
    // --- Início do NOVO código ---
 
 // Pega o valor "sujo" do campo de input, ou '0' se estiver vazio.
-const rawValue = contributionAmountInputElem.value || '0'; 
+// --- Início do NOVO código (mais robusto) ---
 
-// "Limpa" o valor: remove o "R$", espaços, e troca a vírgula por ponto para o JavaScript entender.
-const cleanValue = rawValue.replace('R$', '').trim().replace(',', '.');
+const rawValue = contributionAmountInputElem.value || '0';
 
-// Agora sim, converte o valor limpo para um número.
+// 1. Remove o "R$" e espaços em branco.
+let cleanValue = rawValue.replace('R$', '').trim();
+// 2. Remove os pontos de milhar. Ex: '1.500,75' -> '1500,75'
+cleanValue = cleanValue.replace(/\./g, '');
+// 3. Troca a vírgula do decimal por ponto. Ex: '1500,75' -> '1500.75'
+cleanValue = cleanValue.replace(',', '.');
+
+// Agora sim, converte para número.
 const amount = parseFloat(cleanValue);
+
+// --- Fim do NOVO código ---
 
 // --- Fim do NOVO código ---
     const isUpgradeMode = paymentSectionElem.classList.contains('upgrade-mode');
